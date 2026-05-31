@@ -37,7 +37,7 @@ public class AtividadeController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> buscarAtividadeWeb(@PathVariable Long id) {
+    public ResponseEntity<?> buscarAtividadeWeb(@PathVariable Integer id) {
         Optional<Atividade> atividade = atividadeRepository.findById(id);
         if (atividade.isPresent()) {
             return ResponseEntity.ok(atividade.get());

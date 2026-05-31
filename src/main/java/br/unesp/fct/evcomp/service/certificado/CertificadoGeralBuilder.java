@@ -101,9 +101,8 @@ public class CertificadoGeralBuilder implements CertificadoBuilder {
             new java.util.Date(),
             percentual,
             tipo,
-            pdfBytes,
+            null,
             participante,
-            evento,
             null
         );
         return this.certificado;

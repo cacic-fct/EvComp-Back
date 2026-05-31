@@ -4,14 +4,15 @@ import jakarta.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name = "registros_presenca", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"participante_id", "atividade_id"})
+@Table(name = "presença", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"idUsuário", "idAtividade"})
 })
 public class RegistroDePresenca {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "idPresença")
+    private Integer id;
 
     @Column(name = "data_registro", nullable = false)
     private Date dataRegistro;
@@ -20,11 +21,11 @@ public class RegistroDePresenca {
     private boolean presente;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "participante_id", nullable = false)
+    @JoinColumn(name = "idUsuário", nullable = false)
     private Participante participante;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "atividade_id", nullable = false)
+    @JoinColumn(name = "idAtividade", nullable = false)
     private Atividade atividade;
 
     public RegistroDePresenca() {
@@ -37,11 +38,11 @@ public class RegistroDePresenca {
         this.atividade = atividade;
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

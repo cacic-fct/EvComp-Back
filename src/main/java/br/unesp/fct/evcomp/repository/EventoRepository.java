@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.Date;
 import br.unesp.fct.evcomp.domain.TipoContabilizacao;
 
-public interface EventoRepository extends JpaRepository<Evento, Long> {
+public interface EventoRepository extends JpaRepository<Evento, Integer> {
     @org.springframework.data.jpa.repository.Query("SELECT e FROM Evento e WHERE e.titulo = :titulo")
     Optional<Evento> buscarEventoPorTitulo(@org.springframework.data.repository.query.Param("titulo") String titulo);
 

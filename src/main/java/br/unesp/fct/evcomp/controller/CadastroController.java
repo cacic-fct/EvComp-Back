@@ -24,12 +24,23 @@ public class CadastroController {
 
     @PostMapping
     public ResponseEntity<?> confirmarCadastroWeb(@RequestBody Map<String, String> payload) {
-        confirmarCadastro(payload.get("nome"), payload.get("email"), payload.get("senha"), payload.get("ra"));
-        return ResponseEntity.ok().body(Map.of("message", "Cadastro realizado com sucesso"));
+        try {
+            confirmarCadastro(payload.get("nome"), payload.get("email"), payload.get("senha"), payload.get("ra"));
+            return ResponseEntity.ok().body(Map.of("message", "Cadastro realizado com sucesso"));
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            System.err.println("Erro de violação de integridade (e-mail ou RA duplicado): " + e.getMessage());
+            return ResponseEntity.status(400).body(Map.of("error", "Erro de integridade. Este e-mail ou RA já pode estar em uso."));
+        } catch (Exception e) {
+            System.err.println("Erro desconhecido ao cadastrar usuário:");
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "Erro interno no servidor: " + e.getMessage()));
+        }
     }
 
     public void confirmarCadastro(String nome, String email, String senha, String ra) {
-        Participante p = new Participante(nome, email, senha);
+        // Se o nome vier com espaço, podemos tentar separar nome e sobrenome, 
+        // mas por enquanto passaremos o nome completo no primeiro campo e vazio no segundo
+        Participante p = new Participante(nome, "", email, senha);
         if (ra != null && !ra.isEmpty()) {
             p.setRA(ra);
         }

@@ -16,7 +16,7 @@ public class AtividadeService {
         this.atividadeRepository = atividadeRepository;
     }
 
-    public Optional<Atividade> buscarAtividade(Long id) {
+    public Optional<Atividade> buscarAtividade(Integer id) {
         return atividadeRepository.findById(id);
     }
 

@@ -9,12 +9,13 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Entity
-@Table(name = "atividades")
+@Table(name = "atividade")
 public class Atividade {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "idAtividade")
+    private Integer id;
 
     @Column(nullable = false)
     private String titulo;
@@ -22,33 +23,33 @@ public class Atividade {
     @Column(name = "data_inicio", nullable = false)
     private Date dataInicio;
 
-    @Column(name = "horario_inicio", nullable = false)
+    @Column(name = "hora_inicio", nullable = false)
     private Date horarioInicio;
 
-    @Column(name = "data_fim", nullable = false)
+    @Column(name = "data_termino", nullable = false)
     private Date dataFim;
 
-    @Column(name = "horario_fim", nullable = false)
+    @Column(name = "hora_termino", nullable = false)
     private Date horarioFim;
 
-    @Column(name = "max_participantes", nullable = false)
+    @Column(name = "max_participantes", nullable = false, columnDefinition = "SMALLINT UNSIGNED")
     private int maxParticipantes;
 
-    @Column(name = "carga_horaria_total", nullable = false)
+    @Column(name = "carga_horaria_total", nullable = false, columnDefinition = "SMALLINT UNSIGNED")
     private int cargaHorariaTotal;
 
-    @Column(name = "carga_horaria_ministrante", nullable = false)
+    @Column(name = "carga_horaria_ministrante", nullable = false, columnDefinition = "SMALLINT UNSIGNED")
     private int cargaHorariaMinistrante;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "evento_id", nullable = false)
+    @JoinColumn(name = "idEvento", nullable = false)
     private Evento evento;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-        name = "atividade_ministrantes",
-        joinColumns = @JoinColumn(name = "atividade_id"),
-        inverseJoinColumns = @JoinColumn(name = "usuario_id")
+        name = "ministrante_atividade",
+        joinColumns = @JoinColumn(name = "idAtividade"),
+        inverseJoinColumns = @JoinColumn(name = "idUsuário")
     )
     private List<Usuário> ministrantes = new ArrayList<>();
 
@@ -98,11 +99,11 @@ public class Atividade {
         return !agora.isBefore(inicio.minusMinutes(10)) && !agora.isAfter(fim);
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

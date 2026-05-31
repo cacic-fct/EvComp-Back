@@ -102,10 +102,9 @@ public class CertificadoAtividadeBuilder implements CertificadoBuilder {
             new java.util.Date(),
             percentual,
             tipo,
-            pdfBytes,
+            null,
             participante,
-            evento,
-            new Atividade[]{atividade}
+            atividade
         );
         return this.certificado;
     }

@@ -36,19 +36,22 @@ public class EventoController {
     public void solicitarEventosDisponiveis(String participanteId) {}
     @PostMapping("/{eventoId}/coletores/{coletorId}")
     public ResponseEntity<?> associarColetorWeb(@PathVariable String eventoId, @PathVariable String coletorId) {
-        selecionarEvento(eventoId);
-        tornarColetor(coletorId);
-        return ResponseEntity.ok().body(Map.of("message", "Coletor associado com sucesso"));
+        try {
+            Integer evId = Integer.valueOf(eventoId);
+            Integer colId = Integer.valueOf(coletorId);
+            participanteRepository.tornarColetorNoBanco(colId);
+            participanteRepository.associarColetorAoEventoNoBanco(colId, evId);
+            return ResponseEntity.ok().body(Map.of("message", "Coletor associado com sucesso"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "Erro ao associar coletor: " + e.getMessage()));
+        }
     }
 
     public void selecionarEvento(String eventoId) {}
     public void solicitarEventos() {}
     public void buscarParticipantesPorEvento(String eventoId) {}
     public void tornarColetor(String participanteId) {
-        participanteRepository.findById(Long.valueOf(participanteId)).ifPresent(p -> {
-            p.setEhColetor(true);
-            participanteRepository.save(p);
-        });
+        participanteRepository.tornarColetorNoBanco(Integer.valueOf(participanteId));
     }
     public void removerColetor(String eventoId, String coletorId) {}
     public void buscarColetoresPorEvento(String eventoId) {}

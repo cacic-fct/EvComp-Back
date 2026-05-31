@@ -7,14 +7,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "inscricoes", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"participante_id", "evento_id"})
+@Table(name = "inscrição", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"idUsuário", "idEvento"})
 })
 public class Inscrição {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "idInscrição")
+    private Integer id;
 
     @Column(name = "data_inscricao", nullable = false)
     private Date dataInscricao;
@@ -23,25 +24,25 @@ public class Inscrição {
     private boolean status;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "participante_id", nullable = false)
+    @JoinColumn(name = "idUsuário", nullable = false)
     private Participante participante;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "evento_id", nullable = false)
+    @JoinColumn(name = "idEvento", nullable = false)
     private Evento evento;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-        name = "inscricao_atividades",
-        joinColumns = @JoinColumn(name = "inscricao_id"),
-        inverseJoinColumns = @JoinColumn(name = "atividade_id")
+        name = "inscrição_atividade",
+        joinColumns = @JoinColumn(name = "idInscrição"),
+        inverseJoinColumns = @JoinColumn(name = "idAtividade")
     )
-    private Atividade[] atividade;
+    private List<Atividade> atividade = new ArrayList<>();
 
     public Inscrição() {
     }
 
-    public Inscrição(Date dataInscricao, boolean status, Participante participante, Evento evento, Atividade[] atividade) {
+    public Inscrição(Date dataInscricao, boolean status, Participante participante, Evento evento, List<Atividade> atividade) {
         this.dataInscricao = dataInscricao;
         this.status = status;
         this.participante = participante;
@@ -49,11 +50,11 @@ public class Inscrição {
         this.atividade = atividade;
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -89,11 +90,11 @@ public class Inscrição {
         this.evento = evento;
     }
 
-    public Atividade[] getAtividade() {
+    public List<Atividade> getAtividade() {
         return atividade;
     }
 
-    public void setAtividade(Atividade[] atividade) {
+    public void setAtividade(List<Atividade> atividade) {
         this.atividade = atividade;
     }
 }

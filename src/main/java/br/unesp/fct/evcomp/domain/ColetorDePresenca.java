@@ -2,24 +2,29 @@ package br.unesp.fct.evcomp.domain;
 
 import jakarta.persistence.*;
 import java.util.Date;
+import java.util.List;
 
 @Entity
-@Table(name = "coletores")
-@PrimaryKeyJoinColumn(name = "participante_id")
+@DiscriminatorValue("COL")
 public class ColetorDePresenca extends Participante {
 
-    @Column(name = "data_atribuicao", nullable = false)
-    private Date dataAtribuicao;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "coletor_presença",
+        joinColumns = @JoinColumn(name = "idUsuário"),
+        inverseJoinColumns = @JoinColumn(name = "idEvento")
+    )
+    private List<Evento> eventosColetados;
 
     public ColetorDePresenca() {
         super();
     }
 
-    public Date getDataAtribuicao() {
-        return dataAtribuicao;
+    public List<Evento> getEventosColetados() {
+        return eventosColetados;
     }
 
-    public void setDataAtribuicao(Date dataAtribuicao) {
-        this.dataAtribuicao = dataAtribuicao;
+    public void setEventosColetados(List<Evento> eventosColetados) {
+        this.eventosColetados = eventosColetados;
     }
 }

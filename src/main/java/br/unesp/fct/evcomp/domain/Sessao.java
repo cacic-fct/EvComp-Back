@@ -1,30 +1,19 @@
 package br.unesp.fct.evcomp.domain;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "sessoes")
 public class Sessao {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
-    @Column(nullable = false, unique = true)
     private String token;
 
-    @Column(name = "data_inicio", nullable = false)
     private LocalDateTime dataInicio;
 
-    @Column(name = "data_expiracao", nullable = false)
     private LocalDateTime dataExpiracao;
 
-    @Column(nullable = false)
     private boolean ativa;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "usuario_id", nullable = false)
     private Usuário usuario;
 
     public Sessao() {
@@ -45,11 +34,11 @@ public class Sessao {
     public void invalidarSessao() {
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

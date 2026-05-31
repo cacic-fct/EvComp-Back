@@ -9,12 +9,12 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface InscricaoRepository extends JpaRepository<Inscrição, Long> {
+public interface InscricaoRepository extends JpaRepository<Inscrição, Integer> {
     @org.springframework.data.jpa.repository.Query("SELECT i FROM Inscrição i WHERE i.participante.id = :participanteId AND i.evento.id = :eventoId")
-    Optional<Inscrição> buscarPorParticipanteEEvento(@org.springframework.data.repository.query.Param("participanteId") Long participanteId, @org.springframework.data.repository.query.Param("eventoId") Long eventoId);
+    Optional<Inscrição> buscarPorParticipanteEEvento(@org.springframework.data.repository.query.Param("participanteId") Integer participanteId, @org.springframework.data.repository.query.Param("eventoId") Integer eventoId);
     
-    @Query("SELECT i.participante FROM Inscrição i WHERE i.evento.id = :eventoId")
-    List<Participante> findParticipantesByEventoId(@Param("eventoId") Long eventoId);
+    @org.springframework.data.jpa.repository.Query("SELECT i.participante FROM Inscrição i WHERE i.evento.id = :eventoId AND i.status = true")
+    List<Participante> findParticipantesByEventoId(@Param("eventoId") Integer eventoId);
 
     default boolean buscarPorParticipanteEEvento(String participanteId, String eventoId) { return false; }
     default int contarInscritosPorAtividade(String atividadeId) { return 0; }

@@ -5,12 +5,13 @@ import java.util.Date;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "certificados")
+@Table(name = "certificado")
 public class Certificado {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "idCertificado")
+    private Integer id;
 
     @Column(name = "data_emissao", nullable = false)
     private Date dataEmissao;
@@ -21,39 +22,34 @@ public class Certificado {
     @Column(name = "tipo_certificado", nullable = false)
     private String tipoCertificado;
 
-    @Lob
-    @Column(name = "pdf_conteudo", columnDefinition = "LONGBLOB")
-    private byte[] pdfConteudo;
+    @Column(name = "pdf_path")
+    private String pdfPath;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "participante_id", nullable = false)
-    private Participante participante;
+    @JoinColumn(name = "idUsuário", nullable = false)
+    private Usuário usuario;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "evento_id", nullable = false)
-    private Evento evento;
-
-    @Transient
-    private Atividade[] atividade;
+    @JoinColumn(name = "idAtividade", nullable = false)
+    private Atividade atividade;
 
     public Certificado() {
     }
 
-    public Certificado(Date dataEmissao, float percentualPresenca, String tipoCertificado, byte[] pdfConteudo, Participante participante, Evento evento, Atividade[] atividade) {
+    public Certificado(Date dataEmissao, float percentualPresenca, String tipoCertificado, String pdfPath, Usuário usuario, Atividade atividade) {
         this.dataEmissao = dataEmissao;
         this.percentualPresenca = percentualPresenca;
         this.tipoCertificado = tipoCertificado;
-        this.pdfConteudo = pdfConteudo;
-        this.participante = participante;
-        this.evento = evento;
+        this.pdfPath = pdfPath;
+        this.usuario = usuario;
         this.atividade = atividade;
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -81,35 +77,27 @@ public class Certificado {
         this.tipoCertificado = tipoCertificado;
     }
 
-    public byte[] getPdfConteudo() {
-        return pdfConteudo;
+    public String getPdfPath() {
+        return pdfPath;
     }
 
-    public void setPdfConteudo(byte[] pdfConteudo) {
-        this.pdfConteudo = pdfConteudo;
+    public void setPdfPath(String pdfPath) {
+        this.pdfPath = pdfPath;
     }
 
-    public Participante getParticipante() {
-        return participante;
+    public Usuário getUsuario() {
+        return usuario;
     }
 
-    public void setParticipante(Participante participante) {
-        this.participante = participante;
+    public void setUsuario(Usuário usuario) {
+        this.usuario = usuario;
     }
 
-    public Evento getEvento() {
-        return evento;
-    }
-
-    public void setEvento(Evento evento) {
-        this.evento = evento;
-    }
-
-    public Atividade[] getAtividade() {
+    public Atividade getAtividade() {
         return atividade;
     }
 
-    public void setAtividade(Atividade[] atividade) {
+    public void setAtividade(Atividade atividade) {
         this.atividade = atividade;
     }
 }

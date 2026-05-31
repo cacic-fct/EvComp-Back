@@ -1,28 +1,17 @@
 package br.unesp.fct.evcomp.domain;
 
-import jakarta.persistence.*;
 import java.util.Date;
 
-@Entity
-@Table(name = "relatorios")
 public class Relatorio {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
-    @Column(name = "data_geracao", nullable = false)
     private Date dataGeracao;
 
-    @Column(name = "tipo_relatorio", nullable = false)
     private String tipoRelatorio;
 
-    @Lob
-    @Column(name = "pdf_conteudo", columnDefinition = "LONGBLOB")
     private byte[] pdfConteudo;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "evento_id", nullable = false)
     private Evento evento;
 
     public Relatorio() {
@@ -35,11 +24,11 @@ public class Relatorio {
         this.evento = evento;
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

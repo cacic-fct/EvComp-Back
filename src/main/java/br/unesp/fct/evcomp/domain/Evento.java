@@ -7,12 +7,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "eventos")
+@Table(name = "evento")
 public class Evento {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "idEvento")
+    private Integer id;
 
     @Column(nullable = false, unique = true)
     private String titulo;
@@ -20,10 +21,10 @@ public class Evento {
     @Column(name = "data_inicio", nullable = false)
     private Date dataInicio;
 
-    @Column(name = "data_fim", nullable = false)
+    @Column(name = "data_termino", nullable = false)
     private Date dataFim;
 
-    @Column(nullable = false, length = 1000)
+    @Column(name = "descricao", nullable = false, columnDefinition = "TEXT")
     private String descricao;
 
     private String link;
@@ -64,11 +65,11 @@ public class Evento {
     public void removerAtividade(Atividade atividade) {
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

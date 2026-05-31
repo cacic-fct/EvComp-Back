@@ -35,7 +35,7 @@ public class RelatorioController {
         selecionarEvento(eventoId);
         br.unesp.fct.evcomp.domain.TipoRelatorio tr = br.unesp.fct.evcomp.domain.TipoRelatorio.valueOf(tipo.toUpperCase());
         
-        Optional<Evento> ev = eventoRepository.findById(Long.valueOf(eventoId));
+        Optional<Evento> ev = eventoRepository.findById(Integer.valueOf(eventoId));
         if (ev.isPresent()) {
             gerarRelatorio(ev.get(), tr);
             return ResponseEntity.ok().body(Map.of("message", "Relatorio " + tipo + " gerado"));

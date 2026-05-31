@@ -34,7 +34,7 @@ public class DataInitializer implements CommandLineRunner {
             
             // 1. Criar Evento Base
             Evento evento = new Evento(
-                "SECCOMP 2026 - Semana da Computação",
+                "SECOMPP 2026 - Semana da Computação",
                 new Date(),
                 new Date(System.currentTimeMillis() + 86400000L * 5), // +5 dias
                 "Maior evento de tecnologia do Oeste Paulista",
@@ -58,11 +58,11 @@ public class DataInitializer implements CommandLineRunner {
             atividadeRepository.save(atividade);
 
             // 3. Criar Administrador de Teste
-            Administrador admin = new Administrador("Admin FCT", "admin@unesp.br", "123456");
+            Administrador admin = new Administrador("Admin", "FCT", "admin@unesp.br", "123456");
             usuarioRepository.save(admin);
 
             // 4. Criar Participante (Usuário Comum)
-            Participante part = new Participante("João Silva", "joao@unesp.br", "123456", "123456789");
+            Participante part = new Participante("João", "Silva", "joao@unesp.br", "123456", "123456789");
             participanteRepository.save(part);
             
             System.out.println("========== MOCK DATA INITIALIZED SUCCESSFULLY (H2) ==========");

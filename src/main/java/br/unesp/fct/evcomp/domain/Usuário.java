@@ -1,33 +1,40 @@
 package br.unesp.fct.evcomp.domain;
 
 import jakarta.persistence.*;
+import jakarta.persistence.DiscriminatorType;
 
 @Entity
-@Table(name = "usuarios")
-@Inheritance(strategy = InheritanceType.JOINED)
+@Table(name = "usuário")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "tipo_usuario", discriminatorType = DiscriminatorType.STRING, columnDefinition = "CHAR(3)", length = 3)
 public abstract class Usuário {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    protected Long id;
+    @Column(name = "idUsuário")
+    protected Integer id;
 
     @Column(nullable = false)
     protected String nome;
 
+    @Column(name = "sobrenome", nullable = false)
+    protected String sobrenome;
+
     @Column(nullable = false, unique = true)
     protected String email;
 
-    @Column(nullable = false)
+    @Column(name = "senha_hash")
     protected String senha;
 
-    @Column(name = "token_redefinicao")
+    @Transient
     protected String tokenRedefinicao;
 
     public Usuário() {
     }
 
-    public Usuário(String nome, String email, String senha) {
+    public Usuário(String nome, String sobrenome, String email, String senha) {
         this.nome = nome;
+        this.sobrenome = sobrenome;
         this.email = email;
         this.senha = senha;
     }
@@ -37,11 +44,11 @@ public abstract class Usuário {
         return false;
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -51,6 +58,14 @@ public abstract class Usuário {
 
     public void setNome(String nome) {
         this.nome = nome;
+    }
+
+    public String getSobrenome() {
+        return sobrenome;
+    }
+
+    public void setSobrenome(String sobrenome) {
+        this.sobrenome = sobrenome;
     }
 
     public String getEmail() {

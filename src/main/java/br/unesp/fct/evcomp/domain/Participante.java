@@ -1,17 +1,15 @@
 package br.unesp.fct.evcomp.domain;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.PrimaryKeyJoinColumn;
-import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Column;
 
 @Entity
-@Table(name = "participantes")
-@PrimaryKeyJoinColumn(name = "usuario_id")
+@DiscriminatorValue("PAR")
 public class Participante extends Usuário {
 
-    @Column(name = "ra")
+    @Column(name = "ra", columnDefinition = "CHAR(9)")
     private String RA;
 
     @Transient
@@ -20,26 +18,22 @@ public class Participante extends Usuário {
     @Transient
     private Certificado[] certificado;
 
-    @Column(name = "eh_coletor", nullable = false)
-    private boolean ehColetor = false;
 
     public Participante() {
         super();
     }
 
-    public Participante(String nome, String email, String senha) {
-        super(nome, email, senha);
-        this.ehColetor = false;
+    public Participante(String nome, String sobrenome, String email, String senha) {
+        super(nome, sobrenome, email, senha);
     }
 
-    public Participante(String nome, String email, String senha, String ra) {
-        super(nome, email, senha);
+    public Participante(String nome, String sobrenome, String email, String senha, String ra) {
+        super(nome, sobrenome, email, senha);
         this.RA = ra;
-        this.ehColetor = false;
     }
 
-    public Participante criarParticipante(String nome, String email, String senha) {
-        return new Participante(nome, email, senha);
+    public Participante criarParticipante(String nome, String sobrenome, String email, String senha) {
+        return new Participante(nome, sobrenome, email, senha);
     }
 
     public String getRA() {
@@ -50,11 +44,4 @@ public class Participante extends Usuário {
         this.RA = RA;
     }
 
-    public boolean isEhColetor() {
-        return ehColetor;
-    }
-
-    public void setEhColetor(boolean ehColetor) {
-        this.ehColetor = ehColetor;
-    }
 }
