@@ -38,3 +38,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Passwords and Local Configs ###
+application-dev.properties
