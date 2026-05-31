@@ -21,6 +21,9 @@ public class AtividadeService {
     }
 
     public boolean checarPeriodoPresenca(Atividade atividade) {
-        return false;
+        if (atividade == null) {
+            return false;
+        }
+        return atividade.checarPeriodoPresenca();
     }
 }

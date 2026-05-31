@@ -40,7 +40,8 @@ public class CadastroController {
     public void confirmarCadastro(String nome, String email, String senha, String ra) {
         // Se o nome vier com espaço, podemos tentar separar nome e sobrenome, 
         // mas por enquanto passaremos o nome completo no primeiro campo e vazio no segundo
-        Participante p = new Participante(nome, "", email, senha);
+        String senhaHash = org.mindrot.jbcrypt.BCrypt.hashpw(senha, org.mindrot.jbcrypt.BCrypt.gensalt());
+        Participante p = new Participante(nome, "", email, senhaHash);
         if (ra != null && !ra.isEmpty()) {
             p.setRA(ra);
         }

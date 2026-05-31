@@ -28,10 +28,20 @@ public class Sessao {
     }
 
     public boolean iniciarSessao(Usuário usuarioExiste) {
+        if (usuarioExiste != null) {
+            this.token = java.util.UUID.randomUUID().toString();
+            this.dataInicio = LocalDateTime.now();
+            this.dataExpiracao = LocalDateTime.now().plusHours(2);
+            this.ativa = true;
+            this.usuario = usuarioExiste;
+            return true;
+        }
         return false;
     }
 
     public void invalidarSessao() {
+        this.ativa = false;
+        this.dataExpiracao = LocalDateTime.now();
     }
 
     public Integer getId() {

@@ -39,9 +39,17 @@ public abstract class Usuário {
         this.senha = senha;
     }
 
-    public boolean validarSenha(String senha, Usuário usuarioExiste) {
-        // Implementação mock/stub do Astah
-        return false;
+    public boolean validarSenha(String senhaParaVerificar, Usuário usuarioExiste) {
+        String hashNoBanco = usuarioExiste.getSenha();
+        try {
+            if (hashNoBanco != null && hashNoBanco.startsWith("$2a$")) {
+                return org.mindrot.jbcrypt.BCrypt.checkpw(senhaParaVerificar, hashNoBanco);
+            } else {
+                return senhaParaVerificar.equals(hashNoBanco);
+            }
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public Integer getId() {

@@ -43,5 +43,4 @@ public class Participante extends Usuário {
     public void setRA(String RA) {
         this.RA = RA;
     }
-
 }
