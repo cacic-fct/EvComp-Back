@@ -41,6 +41,7 @@ public class Atividade {
     @Column(name = "carga_horaria_ministrante", nullable = false, columnDefinition = "SMALLINT UNSIGNED")
     private int cargaHorariaMinistrante;
 
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "idEvento", nullable = false)
     private Evento evento;
@@ -53,6 +54,7 @@ public class Atividade {
     )
     private List<Usuário> ministrantes = new ArrayList<>();
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToMany(mappedBy = "atividade", fetch = FetchType.LAZY)
     private List<Inscrição> inscricoes = new ArrayList<>();
 

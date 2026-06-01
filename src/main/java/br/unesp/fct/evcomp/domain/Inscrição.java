@@ -1,3 +1,4 @@
+
 package br.unesp.fct.evcomp.domain;
 
 import jakarta.persistence.*;
@@ -23,14 +24,17 @@ public class Inscrição {
     @Column(nullable = false)
     private boolean status;
 
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "idUsuário", nullable = false)
     private Participante participante;
 
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "idEvento", nullable = false)
     private Evento evento;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "inscrição_atividade",

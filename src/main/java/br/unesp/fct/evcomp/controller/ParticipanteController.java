@@ -24,6 +24,11 @@ public class ParticipanteController {
     public void buscarParticipante(String participanteId) {
     }
 
+    @GetMapping
+    public ResponseEntity<List<Participante>> listarParticipantes() {
+        return ResponseEntity.ok(participanteRepository.findAll());
+    }
+
     public void editarParticipante(String participanteId, String nome, String ra) {
     }
 }

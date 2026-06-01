@@ -11,6 +11,13 @@ public interface AtividadeRepository extends JpaRepository<Atividade, Integer> {
     @org.springframework.data.jpa.repository.Query("SELECT a FROM Atividade a WHERE a.evento.id = :eventoId")
     List<Atividade> buscarAtividadesPorEvento(@org.springframework.data.repository.query.Param("eventoId") Integer eventoId);
 
+    @org.springframework.data.jpa.repository.Query("SELECT a FROM Atividade a WHERE a.titulo = :tituloAtividade")
+    Optional<Atividade> buscarAtividadePorTituloOpcional(@org.springframework.data.repository.query.Param("tituloAtividade") String tituloAtividade);
+
+    default Atividade verificarAtividadeCadastrada(String tituloAtividade) { 
+        return buscarAtividadePorTituloOpcional(tituloAtividade).orElse(null);
+    }
+
     default Atividade buscarAtividadePorId(String atividadeId) { return null; }
     default void removerAtividade(String atividadeId) { }
     default Atividade buscarAtividadesPorEvento(String eventoId) { return null; }
@@ -20,5 +27,4 @@ public interface AtividadeRepository extends JpaRepository<Atividade, Integer> {
     default int buscarCargaHorariaAtividade(String atividadeId) { return 0; }
     default Atividade salvarAtividade(Atividade atividade) { return null; }
     default Atividade buscarAtividadePorTitulo(String tituloAtividade) { return null; }
-    default Atividade verificarAtividadeCadastrada(String tituloAtividade) { return null; }
 }
