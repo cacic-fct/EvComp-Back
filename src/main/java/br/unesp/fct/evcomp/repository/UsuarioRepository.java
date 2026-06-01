@@ -9,11 +9,15 @@ public interface UsuarioRepository extends JpaRepository<Usuário, Integer> {
     Optional<Usuário> buscarUsuarioPorEmail(@org.springframework.data.repository.query.Param("email") String email);
 
 
-    default boolean validarEmailCadastrado(String email) {
-        return false;
-    }
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(u) > 0 FROM Usuário u WHERE u.email = :email")
+    boolean validarEmailCadastrado(@org.springframework.data.repository.query.Param("email") String email);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @org.springframework.data.jpa.repository.Query("UPDATE Usuário u SET u.senha = :novaSenha WHERE u.email = :email")
+    int updateSenha(@org.springframework.data.repository.query.Param("novaSenha") String novaSenha, @org.springframework.data.repository.query.Param("email") String email);
 
     default boolean atualizarSenha(String novaSenha, String email) {
-        return false;
+        return updateSenha(novaSenha, email) > 0;
     }
 }

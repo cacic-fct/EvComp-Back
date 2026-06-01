@@ -2,7 +2,7 @@ package br.unesp.fct.evcomp.controller;
 
 import br.unesp.fct.evcomp.domain.Participante;
 import br.unesp.fct.evcomp.repository.ParticipanteRepository;
-import br.unesp.fct.evcomp.service.ValidacaoService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,12 +14,9 @@ import java.util.Map;
 public class CadastroController {
 
     private final ParticipanteRepository participanteRepository;
-    private final ValidacaoService validacaoService;
-
     @Autowired
-    public CadastroController(ParticipanteRepository participanteRepository, ValidacaoService validacaoService) {
+    public CadastroController(ParticipanteRepository participanteRepository) {
         this.participanteRepository = participanteRepository;
-        this.validacaoService = validacaoService;
     }
 
     @PostMapping
