@@ -68,41 +68,79 @@ public class AtividadeController {
     }
 
     @PostMapping("/evento/{eventoId}")
-    public ResponseEntity<?> criarAtividadeWeb(@PathVariable Integer eventoId, @RequestBody Map<String, String> req) {
-        Optional<Evento> ev = eventoRepository.buscarEventoPorIdInt(eventoId);
-        if (!ev.isPresent()) return ResponseEntity.status(404).body(Map.of("error", "Evento não encontrado."));
+    public ResponseEntity<?> confirmarCriacao(@PathVariable Integer eventoId, @RequestBody Map<String, Object> req) {
+        Optional<Evento> evOpt = eventoRepository.buscarEventoPorIdInt(eventoId);
+        if (!evOpt.isPresent()) return ResponseEntity.status(404).body(Map.of("error", "Evento não encontrado."));
+        Evento evento = evOpt.get();
 
         try {
             java.util.Date dataInicio = null;
             java.util.Date dataTermino = null;
-            if (req.get("data_inicio") != null && !req.get("data_inicio").isEmpty()) {
-                dataInicio = java.util.Date.from(LocalDate.parse(req.get("data_inicio")).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+            if (req.get("data_inicio") != null && !String.valueOf(req.get("data_inicio")).isEmpty()) {
+                dataInicio = java.util.Date.from(LocalDate.parse(String.valueOf(req.get("data_inicio"))).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
             }
-            if (req.get("data_termino") != null && !req.get("data_termino").isEmpty()) {
-                dataTermino = java.util.Date.from(LocalDate.parse(req.get("data_termino")).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+            if (req.get("data_termino") != null && !String.valueOf(req.get("data_termino")).isEmpty()) {
+                dataTermino = java.util.Date.from(LocalDate.parse(String.valueOf(req.get("data_termino"))).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
             }
-            int horInicio = req.get("horario_inicio") != null ? Integer.parseInt(req.get("horario_inicio")) : 0;
-            int horFim = req.get("horario_termino") != null ? Integer.parseInt(req.get("horario_termino")) : 0;
-            int maxP = req.get("max_participantes") != null ? Integer.parseInt(req.get("max_participantes")) : 0;
-            int cargaH = req.get("carga_horaria_ministrantes") != null ? Integer.parseInt(req.get("carga_horaria_ministrantes")) : 0;
+            
+            // Validação do período em relação ao evento pai
+            if (dataInicio != null && dataTermino != null) {
+                LocalDate atvInicio = dataInicio.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                LocalDate atvFim = dataTermino.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                LocalDate evInicio = evento.getDataInicio();
+                LocalDate evFim = evento.getDataFim();
 
-            br.unesp.fct.evcomp.domain.Participante ministrante = null;
-            if (req.get("ministrante_id") != null && !req.get("ministrante_id").isEmpty()) {
-                Optional<br.unesp.fct.evcomp.domain.Participante> pOpt = participanteRepository.findById(Integer.valueOf(req.get("ministrante_id")));
-                if (pOpt.isPresent()) {
-                    ministrante = pOpt.get();
-                } else {
-                    return ResponseEntity.status(404).body(Map.of("error", "Ministrante não encontrado no repositório."));
+                if (evInicio != null && atvInicio.isBefore(evInicio)) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "A data de início da atividade não pode ser anterior à data de início do evento."));
+                }
+                if (evFim != null && atvFim.isAfter(evFim)) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "A data de término da atividade não pode ser posterior à data de término do evento."));
                 }
             }
 
-            return confirmarCriacao(req.get("titulo"), dataInicio, horInicio, dataTermino, horFim, maxP, ministrante, cargaH, ev.get());
+            int horInicio = req.get("horario_inicio") != null ? Integer.parseInt(String.valueOf(req.get("horario_inicio"))) : 0;
+            int horFim = req.get("horario_termino") != null ? Integer.parseInt(String.valueOf(req.get("horario_termino"))) : 0;
+            
+            // Validação de cronologia da própria atividade
+            if (dataInicio != null && dataTermino != null) {
+                LocalDate atvInicio = dataInicio.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                LocalDate atvFim = dataTermino.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                
+                int h_in = horInicio / 100;
+                int m_in = horInicio % 100;
+                LocalTime timeIn = LocalTime.of(h_in, m_in);
+                
+                int h_fi = horFim / 100;
+                int m_fi = horFim % 100;
+                LocalTime timeFi = LocalTime.of(h_fi, m_fi);
+                
+                java.time.LocalDateTime datetimeIn = java.time.LocalDateTime.of(atvInicio, timeIn);
+                java.time.LocalDateTime datetimeFi = java.time.LocalDateTime.of(atvFim, timeFi);
+                
+                if (datetimeIn.isAfter(datetimeFi)) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "A data e hora de início da atividade não podem ser posteriores ao término."));
+                }
+            }
+            int maxP = req.get("max_participantes") != null ? Integer.parseInt(String.valueOf(req.get("max_participantes"))) : 0;
+            int cargaH = req.get("carga_horaria_ministrantes") != null ? Integer.parseInt(String.valueOf(req.get("carga_horaria_ministrantes"))) : 0;
+            int cargaTotal = req.get("carga_horaria_total") != null ? Integer.parseInt(String.valueOf(req.get("carga_horaria_total"))) : 0;
+
+            List<br.unesp.fct.evcomp.domain.Participante> ministrantes = new java.util.ArrayList<>();
+            if (req.get("ministrantes_ids") != null && req.get("ministrantes_ids") instanceof List) {
+                List<Integer> ids = new java.util.ArrayList<>();
+                for (Object idObj : (List<?>) req.get("ministrantes_ids")) {
+                    ids.add(Integer.parseInt(String.valueOf(idObj)));
+                }
+                ministrantes = participanteRepository.findAllById(ids);
+            }
+
+            return confirmarCriacao(String.valueOf(req.get("titulo")), dataInicio, horInicio, dataTermino, horFim, maxP, ministrantes, cargaH, cargaTotal, evento);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Erro ao processar dados: " + e.getMessage()));
         }
     }
 
-    public ResponseEntity<?> confirmarCriacao(String titulo, java.util.Date data_inicio, int horario_inicio, java.util.Date data_termino, int horario_termino, int max_participantes, br.unesp.fct.evcomp.domain.Participante ministrantes, int carga_horaria_ministrantes, Evento evento) {
+    public ResponseEntity<?> confirmarCriacao(String titulo, java.util.Date data_inicio, int horario_inicio, java.util.Date data_termino, int horario_termino, int max_participantes, List<br.unesp.fct.evcomp.domain.Participante> ministrantes, int carga_horaria_ministrantes, int carga_horaria_total, Evento evento) {
         if (titulo == null || data_inicio == null || data_termino == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Campos obrigatórios ausentes."));
         }
@@ -124,9 +162,6 @@ public class AtividadeController {
         java.util.Date dateHoraInicio = java.util.Date.from(timeInicio.atDate(LocalDate.now()).atZone(java.time.ZoneId.systemDefault()).toInstant());
         java.util.Date dateHoraFim = java.util.Date.from(timeFim.atDate(LocalDate.now()).atZone(java.time.ZoneId.systemDefault()).toInstant());
 
-        // Assuming carga_horaria_total = carga_horaria_ministrantes for simplicity, or we can calculate difference
-        int carga_horaria_total = carga_horaria_ministrantes; 
-        
         Atividade atividade = new Atividade(titulo, data_inicio, dateHoraInicio, data_termino, dateHoraFim, max_participantes, carga_horaria_total, carga_horaria_ministrantes);
         // Fix dates for entity since setter uses LocalDate
         LocalDate ldInicio = data_inicio.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
@@ -135,8 +170,8 @@ public class AtividadeController {
         atividade.setDataFim(ldTermino);
         
         atividade.setEvento(evento);
-        if (ministrantes != null) {
-            atividade.getMinistrantes().add(ministrantes);
+        if (ministrantes != null && !ministrantes.isEmpty()) {
+            atividade.getMinistrantes().addAll(ministrantes);
         }
         
         atividadeRepository.save(atividade);
@@ -144,33 +179,74 @@ public class AtividadeController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> editarAtividadeWeb(@PathVariable Integer id, @RequestBody Map<String, String> req) {
-        return edicaoAtividade(String.valueOf(id), req);
-    }
-
-    public ResponseEntity<?> edicaoAtividade(String atividadeId, Map<String, String> req) {
-        Optional<Atividade> atOpt = atividadeRepository.findById(Integer.valueOf(atividadeId));
+    public ResponseEntity<?> edicaoAtividade(@PathVariable Integer id, @RequestBody Map<String, Object> req) {
+        Optional<Atividade> atOpt = atividadeRepository.findById(id);
         if (!atOpt.isPresent()) return ResponseEntity.status(404).body(Map.of("error", "Atividade não encontrada."));
         
         Atividade at = atOpt.get();
-        String titulo = req.get("titulo");
+        String titulo = req.get("titulo") != null ? String.valueOf(req.get("titulo")) : null;
         if (titulo != null && !titulo.equals(at.getTitulo()) && atividadeRepository.verificarAtividadeCadastrada(titulo) != null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Já existe uma atividade com este título."));
         }
+        
         if (titulo != null) at.setTitulo(titulo);
         if (req.get("max_participantes") != null) {
-            at.setMaxParticipantes(Integer.parseInt(req.get("max_participantes")));
+            at.setMaxParticipantes(Integer.parseInt(String.valueOf(req.get("max_participantes"))));
         }
         if (req.get("carga_horaria_ministrantes") != null) {
-            at.setCargaHorariaMinistrante(Integer.parseInt(req.get("carga_horaria_ministrantes")));
-            at.setCargaHorariaTotal(Integer.parseInt(req.get("carga_horaria_ministrantes")));
+            at.setCargaHorariaMinistrante(Integer.parseInt(String.valueOf(req.get("carga_horaria_ministrantes"))));
         }
-        if (req.get("ministrante_id") != null && !req.get("ministrante_id").isEmpty()) {
-            Optional<br.unesp.fct.evcomp.domain.Participante> pOpt = participanteRepository.findById(Integer.valueOf(req.get("ministrante_id")));
-            if (pOpt.isPresent()) {
-                at.getMinistrantes().clear();
-                at.getMinistrantes().add(pOpt.get());
+        if (req.get("carga_horaria_total") != null) {
+            at.setCargaHorariaTotal(Integer.parseInt(String.valueOf(req.get("carga_horaria_total"))));
+        }
+        
+        if (req.get("ministrantes_ids") != null && req.get("ministrantes_ids") instanceof List) {
+            List<Integer> ids = new java.util.ArrayList<>();
+            for (Object idObj : (List<?>) req.get("ministrantes_ids")) {
+                ids.add(Integer.parseInt(String.valueOf(idObj)));
             }
+            List<br.unesp.fct.evcomp.domain.Participante> novosMinistrantes = participanteRepository.findAllById(ids);
+            at.getMinistrantes().clear();
+            at.getMinistrantes().addAll(novosMinistrantes);
+        }
+        
+        // Handle dates parsing and validation on edit
+        try {
+            if (req.get("data_inicio") != null && !String.valueOf(req.get("data_inicio")).isEmpty()) {
+                LocalDate atvInicio = LocalDate.parse(String.valueOf(req.get("data_inicio")));
+                if (at.getEvento() != null && at.getEvento().getDataInicio() != null && atvInicio.isBefore(at.getEvento().getDataInicio())) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "A data de início da atividade não pode ser anterior à data de início do evento."));
+                }
+                at.setDataInicio(atvInicio);
+            }
+            if (req.get("data_termino") != null && !String.valueOf(req.get("data_termino")).isEmpty()) {
+                LocalDate atvFim = LocalDate.parse(String.valueOf(req.get("data_termino")));
+                if (at.getEvento() != null && at.getEvento().getDataFim() != null && atvFim.isAfter(at.getEvento().getDataFim())) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "A data de término da atividade não pode ser posterior à data de término do evento."));
+                }
+                at.setDataFim(atvFim);
+            }
+            
+            if (req.get("horario_inicio") != null) {
+                int h = Integer.parseInt(String.valueOf(req.get("horario_inicio")));
+                at.setHorarioInicio(LocalTime.of(h / 100, h % 100));
+            }
+            if (req.get("horario_termino") != null) {
+                int h = Integer.parseInt(String.valueOf(req.get("horario_termino")));
+                at.setHorarioFim(LocalTime.of(h / 100, h % 100));
+            }
+            
+            // Validação de cronologia da própria atividade
+            if (at.getDataInicio() != null && at.getDataFim() != null && at.getHorarioInicio() != null && at.getHorarioFim() != null) {
+                java.time.LocalDateTime datetimeIn = java.time.LocalDateTime.of(at.getDataInicio(), at.getHorarioInicio());
+                java.time.LocalDateTime datetimeFi = java.time.LocalDateTime.of(at.getDataFim(), at.getHorarioFim());
+                
+                if (datetimeIn.isAfter(datetimeFi)) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "A data e hora de início da atividade não podem ser posteriores ao término."));
+                }
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Erro ao processar datas/horários: " + e.getMessage()));
         }
         
         atividadeRepository.save(at);
@@ -178,13 +254,14 @@ public class AtividadeController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> removerAtividadeWeb(@PathVariable Integer id) {
-        excluirAtividade(String.valueOf(id));
+    public ResponseEntity<?> excluirAtividade(@PathVariable Integer id, @RequestParam(required = false) boolean confirmar) {
+        int inscritos = inscricaoRepository.contarInscritosPorAtividadeInt(id);
+        if (inscritos > 0 && !confirmar) {
+            return ResponseEntity.status(409).body(Map.of("error", "Atividade com participantes inscritos. Confirmar exclusão?"));
+        }
+        
+        atividadeRepository.deleteById(id);
         return ResponseEntity.ok(Map.of("message", "Atividade excluída com sucesso."));
-    }
-
-    public void excluirAtividade(String atividadeId) {
-        atividadeRepository.deleteById(Integer.valueOf(atividadeId));
     }
 
     @GetMapping("/{id}/vagas")
