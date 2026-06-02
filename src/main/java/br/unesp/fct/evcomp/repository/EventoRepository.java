@@ -11,6 +11,9 @@ public interface EventoRepository extends JpaRepository<Evento, Integer> {
     @org.springframework.data.jpa.repository.Query("SELECT e FROM Evento e WHERE e.titulo = :titulo")
     Optional<Evento> buscarEventoPorTitulo(@org.springframework.data.repository.query.Param("titulo") String titulo);
 
+    @org.springframework.data.jpa.repository.Query("SELECT e FROM Evento e WHERE LOWER(e.titulo) LIKE LOWER(CONCAT('%', :titulo, '%'))")
+    java.util.List<Evento> buscarEventosPorTituloParcial(@org.springframework.data.repository.query.Param("titulo") String titulo);
+
     @org.springframework.data.jpa.repository.Query("SELECT COUNT(e) > 0 FROM Evento e WHERE e.titulo = :tituloEvento")
     boolean verificarEventoCadastrado(@org.springframework.data.repository.query.Param("tituloEvento") String tituloEvento);
 

@@ -136,7 +136,8 @@ public class AtividadeController {
 
             return confirmarCriacao(String.valueOf(req.get("titulo")), dataInicio, horInicio, dataTermino, horFim, maxP, ministrantes, cargaH, cargaTotal, evento);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Erro ao processar dados: " + e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro interno no servidor ao processar a requisição."));
         }
     }
 
@@ -145,9 +146,9 @@ public class AtividadeController {
             return ResponseEntity.badRequest().body(Map.of("error", "Campos obrigatórios ausentes."));
         }
         
-        Atividade existente = atividadeRepository.verificarAtividadeCadastrada(titulo);
+        Atividade existente = atividadeRepository.verificarAtividadeCadastrada(titulo, evento.getId());
         if (existente != null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Já existe uma atividade com este título."));
+            return ResponseEntity.badRequest().body(Map.of("error", "Já existe uma atividade com este título neste evento."));
         }
 
         // Parse HHMM from int
@@ -163,7 +164,6 @@ public class AtividadeController {
         java.util.Date dateHoraFim = java.util.Date.from(timeFim.atDate(LocalDate.now()).atZone(java.time.ZoneId.systemDefault()).toInstant());
 
         Atividade atividade = new Atividade(titulo, data_inicio, dateHoraInicio, data_termino, dateHoraFim, max_participantes, carga_horaria_total, carga_horaria_ministrantes);
-        // Fix dates for entity since setter uses LocalDate
         LocalDate ldInicio = data_inicio.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
         LocalDate ldTermino = data_termino.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
         atividade.setDataInicio(ldInicio);
@@ -185,8 +185,8 @@ public class AtividadeController {
         
         Atividade at = atOpt.get();
         String titulo = req.get("titulo") != null ? String.valueOf(req.get("titulo")) : null;
-        if (titulo != null && !titulo.equals(at.getTitulo()) && atividadeRepository.verificarAtividadeCadastrada(titulo) != null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Já existe uma atividade com este título."));
+        if (titulo != null && !titulo.equals(at.getTitulo()) && atividadeRepository.buscarAtividadePorTitulo(titulo, at.getEvento().getId()).orElse(null) != null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Já existe uma atividade com este título neste evento."));
         }
         
         if (titulo != null) at.setTitulo(titulo);
@@ -246,7 +246,8 @@ public class AtividadeController {
                 }
             }
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Erro ao processar datas/horários: " + e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro interno no servidor ao editar a atividade."));
         }
         
         atividadeRepository.save(at);

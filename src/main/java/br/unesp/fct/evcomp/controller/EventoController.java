@@ -78,7 +78,8 @@ public class EventoController {
             
             return ResponseEntity.ok(Map.of("message", "Coletor associado com sucesso."));
         } catch (Exception e) {
-            return ResponseEntity.status(400).body(Map.of("error", "Erro ao associar coletor: " + e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro interno no servidor ao associar o coletor."));
         }
     }
 
@@ -105,7 +106,8 @@ public class EventoController {
             }
             return confirmarCriacao(req.get("titulo"), dataInicio, dataTermino, req.get("descricao"), req.get("link"), req.get("tipoContabilizacao"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Erro ao processar os dados: " + e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro interno no servidor ao cadastrar o evento."));
         }
     }
 
@@ -122,7 +124,8 @@ public class EventoController {
             }
             return confirmarEdicao(id, req.get("titulo"), dataInicio, dataTermino, req.get("descricao"), req.get("link"), req.get("tipoContabilizacao"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Erro ao processar os dados: " + e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro interno no servidor ao editar o evento."));
         }
     }
 
@@ -151,8 +154,8 @@ public class EventoController {
     }
 
     public ResponseEntity<?> confirmarConsulta(String tituloEvento) {
-        Optional<Evento> ev = eventoRepository.buscarEventoPorTitulo(tituloEvento);
-        return ev.isPresent() ? ResponseEntity.ok(ev.get()) : ResponseEntity.status(404).body(Map.of("error", "Evento não encontrado."));
+        java.util.List<Evento> evs = eventoRepository.buscarEventosPorTituloParcial(tituloEvento);
+        return evs.isEmpty() ? ResponseEntity.status(404).body(Map.of("error", "Nenhum evento encontrado com este título.")) : ResponseEntity.ok(evs);
     }
 
     public ResponseEntity<?> confirmarEdicao(Integer id, String titulo, java.util.Date dataInicio, java.util.Date dataTermino, String descricao, String link, String tipo) {
@@ -168,8 +171,6 @@ public class EventoController {
         }
         
         if (titulo != null) evento.setTitulo(titulo);
-        // Fix the date setting! Evento uses LocalDate in its setters, so we need to convert back or bypass it.
-        // But since we parsed it, we can just use the LocalDate setters
         if (dataInicio != null) {
             LocalDate ldInicio = dataInicio.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
             evento.setDataInicio(ldInicio);
