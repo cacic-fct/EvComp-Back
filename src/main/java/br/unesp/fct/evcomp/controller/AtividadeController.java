@@ -74,19 +74,19 @@ public class AtividadeController {
         Evento evento = evOpt.get();
 
         try {
-            java.util.Date dataInicio = null;
-            java.util.Date dataTermino = null;
+            LocalDate dataInicio = null;
+            LocalDate dataTermino = null;
             if (req.get("data_inicio") != null && !String.valueOf(req.get("data_inicio")).isEmpty()) {
-                dataInicio = java.util.Date.from(LocalDate.parse(String.valueOf(req.get("data_inicio"))).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+                dataInicio = LocalDate.parse(String.valueOf(req.get("data_inicio")));
             }
             if (req.get("data_termino") != null && !String.valueOf(req.get("data_termino")).isEmpty()) {
-                dataTermino = java.util.Date.from(LocalDate.parse(String.valueOf(req.get("data_termino"))).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+                dataTermino = LocalDate.parse(String.valueOf(req.get("data_termino")));
             }
             
             // Validação do período em relação ao evento pai
             if (dataInicio != null && dataTermino != null) {
-                LocalDate atvInicio = dataInicio.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
-                LocalDate atvFim = dataTermino.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                LocalDate atvInicio = dataInicio;
+                LocalDate atvFim = dataTermino;
                 LocalDate evInicio = evento.getDataInicio();
                 LocalDate evFim = evento.getDataFim();
 
@@ -103,8 +103,8 @@ public class AtividadeController {
             
             // Validação de cronologia da própria atividade
             if (dataInicio != null && dataTermino != null) {
-                LocalDate atvInicio = dataInicio.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
-                LocalDate atvFim = dataTermino.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                LocalDate atvInicio = dataInicio;
+                LocalDate atvFim = dataTermino;
                 
                 int h_in = horInicio / 100;
                 int m_in = horInicio % 100;
@@ -141,7 +141,7 @@ public class AtividadeController {
         }
     }
 
-    public ResponseEntity<?> confirmarCriacao(String titulo, java.util.Date data_inicio, int horario_inicio, java.util.Date data_termino, int horario_termino, int max_participantes, List<br.unesp.fct.evcomp.domain.Participante> ministrantes, int carga_horaria_ministrantes, int carga_horaria_total, Evento evento) {
+    public ResponseEntity<?> confirmarCriacao(String titulo, LocalDate data_inicio, int horario_inicio, LocalDate data_termino, int horario_termino, int max_participantes, List<br.unesp.fct.evcomp.domain.Participante> ministrantes, int carga_horaria_ministrantes, int carga_horaria_total, Evento evento) {
         if (titulo == null || data_inicio == null || data_termino == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Campos obrigatórios ausentes."));
         }
@@ -160,14 +160,9 @@ public class AtividadeController {
         int m_fim = horario_termino % 100;
         LocalTime timeFim = LocalTime.of(h_fim, m_fim);
 
-        java.util.Date dateHoraInicio = java.util.Date.from(timeInicio.atDate(LocalDate.now()).atZone(java.time.ZoneId.systemDefault()).toInstant());
-        java.util.Date dateHoraFim = java.util.Date.from(timeFim.atDate(LocalDate.now()).atZone(java.time.ZoneId.systemDefault()).toInstant());
-
-        Atividade atividade = new Atividade(titulo, data_inicio, dateHoraInicio, data_termino, dateHoraFim, max_participantes, carga_horaria_total, carga_horaria_ministrantes);
-        LocalDate ldInicio = data_inicio.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
-        LocalDate ldTermino = data_termino.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
-        atividade.setDataInicio(ldInicio);
-        atividade.setDataFim(ldTermino);
+        Atividade atividade = new Atividade(titulo, data_inicio, timeInicio, data_termino, timeFim, max_participantes, carga_horaria_total, carga_horaria_ministrantes);
+        atividade.setDataInicio(data_inicio);
+        atividade.setDataFim(data_termino);
         
         atividade.setEvento(evento);
         if (ministrantes != null && !ministrantes.isEmpty()) {

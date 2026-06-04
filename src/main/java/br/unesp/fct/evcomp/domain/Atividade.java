@@ -21,16 +21,16 @@ public class Atividade {
     private String titulo;
 
     @Column(name = "data_inicio", nullable = false)
-    private Date dataInicio;
+    private LocalDate dataInicio;
 
     @Column(name = "hora_inicio", nullable = false)
-    private Date horarioInicio;
+    private LocalTime horarioInicio;
 
     @Column(name = "data_termino", nullable = false)
-    private Date dataFim;
+    private LocalDate dataFim;
 
     @Column(name = "hora_termino", nullable = false)
-    private Date horarioFim;
+    private LocalTime horarioFim;
 
     @Column(name = "max_participantes", nullable = false, columnDefinition = "SMALLINT UNSIGNED")
     private int maxParticipantes;
@@ -64,7 +64,7 @@ public class Atividade {
     public Atividade() {
     }
 
-    public Atividade(String titulo, Date dataInicio, Date horarioInicio, Date dataFim, Date horarioFim, int maxParticipantes, int cargaHorariaTotal, int cargaHorariaMinistrante) {
+    public Atividade(String titulo, LocalDate dataInicio, LocalTime horarioInicio, LocalDate dataFim, LocalTime horarioFim, int maxParticipantes, int cargaHorariaTotal, int cargaHorariaMinistrante) {
         this.titulo = titulo;
         this.dataInicio = dataInicio;
         this.horarioInicio = horarioInicio;
@@ -118,35 +118,35 @@ public class Atividade {
     }
 
     public LocalDate getDataInicio() {
-        return dataInicio == null ? null : dataInicio.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+        return dataInicio;
     }
 
     public void setDataInicio(LocalDate dataInicio) {
-        this.dataInicio = dataInicio == null ? null : Date.from(dataInicio.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+        this.dataInicio = dataInicio;
     }
 
     public LocalTime getHorarioInicio() {
-        return horarioInicio == null ? null : horarioInicio.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalTime();
+        return horarioInicio;
     }
 
     public void setHorarioInicio(LocalTime horarioInicio) {
-        this.horarioInicio = horarioInicio == null ? null : Date.from(horarioInicio.atDate(LocalDate.now()).atZone(java.time.ZoneId.systemDefault()).toInstant());
+        this.horarioInicio = horarioInicio;
     }
 
     public LocalDate getDataFim() {
-        return dataFim == null ? null : dataFim.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+        return dataFim;
     }
 
     public void setDataFim(LocalDate dataFim) {
-        this.dataFim = dataFim == null ? null : Date.from(dataFim.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+        this.dataFim = dataFim;
     }
 
     public LocalTime getHorarioFim() {
-        return horarioFim == null ? null : horarioFim.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalTime();
+        return horarioFim;
     }
 
     public void setHorarioFim(LocalTime horarioFim) {
-        this.horarioFim = horarioFim == null ? null : Date.from(horarioFim.atDate(LocalDate.now()).atZone(java.time.ZoneId.systemDefault()).toInstant());
+        this.horarioFim = horarioFim;
     }
 
     public int getMaxParticipantes() {

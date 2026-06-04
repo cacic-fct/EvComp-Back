@@ -96,13 +96,13 @@ public class EventoController {
     @PostMapping
     public ResponseEntity<?> criarEventoWeb(@RequestBody Map<String, String> req) {
         try {
-            java.util.Date dataInicio = null;
-            java.util.Date dataTermino = null;
+            LocalDate dataInicio = null;
+            LocalDate dataTermino = null;
             if (req.get("dataInicio") != null && !req.get("dataInicio").isEmpty()) {
-                dataInicio = java.util.Date.from(LocalDate.parse(req.get("dataInicio")).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+                dataInicio = LocalDate.parse(req.get("dataInicio"));
             }
             if (req.get("dataTermino") != null && !req.get("dataTermino").isEmpty()) {
-                dataTermino = java.util.Date.from(LocalDate.parse(req.get("dataTermino")).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+                dataTermino = LocalDate.parse(req.get("dataTermino"));
             }
             return confirmarCriacao(req.get("titulo"), dataInicio, dataTermino, req.get("descricao"), req.get("link"), req.get("tipoContabilizacao"));
         } catch (Exception e) {
@@ -114,13 +114,13 @@ public class EventoController {
     @PutMapping("/{id}")
     public ResponseEntity<?> editarEventoWeb(@PathVariable Integer id, @RequestBody Map<String, String> req) {
         try {
-            java.util.Date dataInicio = null;
-            java.util.Date dataTermino = null;
+            LocalDate dataInicio = null;
+            LocalDate dataTermino = null;
             if (req.get("dataInicio") != null && !req.get("dataInicio").isEmpty()) {
-                dataInicio = java.util.Date.from(LocalDate.parse(req.get("dataInicio")).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+                dataInicio = LocalDate.parse(req.get("dataInicio"));
             }
             if (req.get("dataTermino") != null && !req.get("dataTermino").isEmpty()) {
-                dataTermino = java.util.Date.from(LocalDate.parse(req.get("dataTermino")).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+                dataTermino = LocalDate.parse(req.get("dataTermino"));
             }
             return confirmarEdicao(id, req.get("titulo"), dataInicio, dataTermino, req.get("descricao"), req.get("link"), req.get("tipoContabilizacao"));
         } catch (Exception e) {
@@ -134,11 +134,11 @@ public class EventoController {
         return confirmarConsulta(titulo);
     }
 
-    public ResponseEntity<?> confirmarCriacao(String titulo, java.util.Date dataInicio, java.util.Date dataTermino, String descricao, String link, String tipo) {
+    public ResponseEntity<?> confirmarCriacao(String titulo, LocalDate dataInicio, LocalDate dataTermino, String descricao, String link, String tipo) {
         if (dataInicio == null || dataTermino == null || titulo == null || descricao == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Campos obrigatórios ausentes."));
         }
-        if (dataTermino.before(dataInicio)) {
+        if (dataTermino.isBefore(dataInicio)) {
             return ResponseEntity.badRequest().body(Map.of("error", "Data de término não pode ser anterior à data de início."));
         }
         if (eventoRepository.verificarEventoCadastrado(titulo)) {
@@ -158,12 +158,12 @@ public class EventoController {
         return evs.isEmpty() ? ResponseEntity.status(404).body(Map.of("error", "Nenhum evento encontrado com este título.")) : ResponseEntity.ok(evs);
     }
 
-    public ResponseEntity<?> confirmarEdicao(Integer id, String titulo, java.util.Date dataInicio, java.util.Date dataTermino, String descricao, String link, String tipo) {
+    public ResponseEntity<?> confirmarEdicao(Integer id, String titulo, LocalDate dataInicio, LocalDate dataTermino, String descricao, String link, String tipo) {
         Optional<Evento> evOpt = eventoRepository.buscarEventoPorIdInt(id);
         if (!evOpt.isPresent()) return ResponseEntity.status(404).body(Map.of("error", "Evento não encontrado."));
         
         Evento evento = evOpt.get();
-        if (dataTermino != null && dataInicio != null && dataTermino.before(dataInicio)) {
+        if (dataTermino != null && dataInicio != null && dataTermino.isBefore(dataInicio)) {
             return ResponseEntity.badRequest().body(Map.of("error", "Data de término não pode ser anterior à data de início."));
         }
         if (titulo != null && !titulo.equals(evento.getTitulo()) && eventoRepository.verificarEventoCadastrado(titulo)) {
@@ -172,12 +172,10 @@ public class EventoController {
         
         if (titulo != null) evento.setTitulo(titulo);
         if (dataInicio != null) {
-            LocalDate ldInicio = dataInicio.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
-            evento.setDataInicio(ldInicio);
+            evento.setDataInicio(dataInicio);
         }
         if (dataTermino != null) {
-            LocalDate ldTermino = dataTermino.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
-            evento.setDataFim(ldTermino);
+            evento.setDataFim(dataTermino);
         }
         if (descricao != null) evento.setDescricao(descricao);
         if (link != null) evento.setLink(link);
