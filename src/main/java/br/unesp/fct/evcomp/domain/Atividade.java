@@ -61,6 +61,16 @@ public class Atividade {
     @Transient
     private RegistroDePresenca[] registroDePresenca;
 
+    @PreRemove
+    private void removeInscricoes() {
+        for (Inscrição inscricao : inscricoes) {
+            inscricao.getAtividade().remove(this);
+            if (inscricao.getAtividade().isEmpty()) {
+                inscricao.setStatus(false);
+            }
+        }
+    }
+
     public Atividade() {
     }
 

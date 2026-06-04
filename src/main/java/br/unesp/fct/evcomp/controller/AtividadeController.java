@@ -136,7 +136,7 @@ public class AtividadeController {
 
             return confirmarCriacao(String.valueOf(req.get("titulo")), dataInicio, horInicio, dataTermino, horFim, maxP, ministrantes, cargaH, cargaTotal, evento);
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Erro confirmarCriacao Atividade: " + e.getMessage());
             return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro interno no servidor ao processar a requisição."));
         }
     }
@@ -173,6 +173,7 @@ public class AtividadeController {
         return ResponseEntity.ok(atividade);
     }
 
+    @org.springframework.transaction.annotation.Transactional
     @PutMapping("/{id}")
     public ResponseEntity<?> edicaoAtividade(@PathVariable Integer id, @RequestBody Map<String, Object> req) {
         Optional<Atividade> atOpt = atividadeRepository.findById(id);
@@ -186,7 +187,12 @@ public class AtividadeController {
         
         if (titulo != null) at.setTitulo(titulo);
         if (req.get("max_participantes") != null) {
-            at.setMaxParticipantes(Integer.parseInt(String.valueOf(req.get("max_participantes"))));
+            int novoMax = Integer.parseInt(String.valueOf(req.get("max_participantes")));
+            int inscritos = inscricaoRepository.contarInscritosPorAtividadeInt(id);
+            if (novoMax < inscritos) {
+                return ResponseEntity.badRequest().body(Map.of("error", "O número máximo de participantes não pode ser inferior aos já inscritos (" + inscritos + " inscritos atualmente)."));
+            }
+            at.setMaxParticipantes(novoMax);
         }
         if (req.get("carga_horaria_ministrantes") != null) {
             at.setCargaHorariaMinistrante(Integer.parseInt(String.valueOf(req.get("carga_horaria_ministrantes"))));
@@ -206,6 +212,7 @@ public class AtividadeController {
         }
         
         // Handle dates parsing and validation on edit
+        int desinscritos = 0;
         try {
             if (req.get("data_inicio") != null && !String.valueOf(req.get("data_inicio")).isEmpty()) {
                 LocalDate atvInicio = LocalDate.parse(String.valueOf(req.get("data_inicio")));
@@ -240,13 +247,43 @@ public class AtividadeController {
                     return ResponseEntity.badRequest().body(Map.of("error", "A data e hora de início da atividade não podem ser posteriores ao término."));
                 }
             }
+            
+            // Resolução Automática de Conflitos para Inscritos
+            if (at.getDataInicio() != null && at.getHorarioInicio() != null && at.getDataFim() != null && at.getHorarioFim() != null) {
+                java.util.List<br.unesp.fct.evcomp.domain.Inscrição> inscricoesParaVerificar = new java.util.ArrayList<>(at.getInscricoes());
+                for (br.unesp.fct.evcomp.domain.Inscrição inscricao : inscricoesParaVerificar) {
+                    if (inscricao.isStatus()) {
+                        boolean conflitoEncontrado = false;
+                        for (br.unesp.fct.evcomp.domain.Atividade outra : inscricao.getAtividade()) {
+                            if (!outra.getId().equals(at.getId()) && at.verificarConflitoHorarios(outra)) {
+                                conflitoEncontrado = true;
+                                break;
+                            }
+                        }
+                        if (conflitoEncontrado) {
+                            inscricao.getAtividade().remove(at);
+                            at.getInscricoes().remove(inscricao);
+                            if (inscricao.getAtividade().isEmpty()) {
+                                inscricao.setStatus(false);
+                            }
+                            inscricaoRepository.save(inscricao);
+                            desinscritos++;
+                        }
+                    }
+                }
+            }
+
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Erro edicaoAtividade: " + e.getMessage());
             return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro interno no servidor ao editar a atividade."));
         }
         
         atividadeRepository.save(at);
-        return ResponseEntity.ok(at);
+        
+        if (desinscritos > 0) {
+            return ResponseEntity.ok(Map.of("message", "Atividade editada com sucesso! ATENÇÃO: " + desinscritos + " participante(s) foram desinscritos automaticamente devido a conflito de horário."));
+        }
+        return ResponseEntity.ok(Map.of("message", "Atividade editada com sucesso!"));
     }
 
     @DeleteMapping("/{id}")

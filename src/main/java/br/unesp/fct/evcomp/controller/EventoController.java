@@ -78,7 +78,7 @@ public class EventoController {
             
             return ResponseEntity.ok(Map.of("message", "Coletor associado com sucesso."));
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Erro ao associar coletor: " + e.getMessage());
             return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro interno no servidor ao associar o coletor."));
         }
     }
@@ -106,7 +106,7 @@ public class EventoController {
             }
             return confirmarCriacao(req.get("titulo"), dataInicio, dataTermino, req.get("descricao"), req.get("link"), req.get("tipoContabilizacao"));
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Erro ao criar evento: " + e.getMessage());
             return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro interno no servidor ao cadastrar o evento."));
         }
     }
@@ -124,7 +124,7 @@ public class EventoController {
             }
             return confirmarEdicao(id, req.get("titulo"), dataInicio, dataTermino, req.get("descricao"), req.get("link"), req.get("tipoContabilizacao"));
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Erro ao editar evento: " + e.getMessage());
             return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro interno no servidor ao editar o evento."));
         }
     }

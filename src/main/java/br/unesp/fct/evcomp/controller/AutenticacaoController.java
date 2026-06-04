@@ -112,6 +112,7 @@ public class AutenticacaoController {
         if (sessaoOpt.isPresent() && sessaoOpt.get().isAtiva()) {
             br.unesp.fct.evcomp.domain.Usuário user = sessaoOpt.get().getUsuario();
             Map<String, String> userData = new java.util.HashMap<>();
+            userData.put("id", String.valueOf(user.getId()));
             userData.put("nome", user.getNome());
             userData.put("email", user.getEmail());
             userData.put("role", user.getClass().getSimpleName().toUpperCase());
