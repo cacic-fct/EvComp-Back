@@ -59,7 +59,7 @@ public class AutenticacaoController {
                     return ResponseEntity.ok(Map.of(
                         "message", "Login bem-sucedido", 
                         "nome", usuarioExiste.getNome(), 
-                        "role", usuarioExiste.getClass().getSimpleName().toUpperCase(),
+                        "role", usuarioExiste.getRole(),
                         "isColetor", String.valueOf(isColetor),
                         "token", novaSessao.getToken()
                     ));
@@ -115,7 +115,7 @@ public class AutenticacaoController {
             userData.put("id", String.valueOf(user.getId()));
             userData.put("nome", user.getNome());
             userData.put("email", user.getEmail());
-            userData.put("role", user.getClass().getSimpleName().toUpperCase());
+            userData.put("role", user.getRole());
             if (user instanceof br.unesp.fct.evcomp.domain.Participante) {
                 String ra = ((br.unesp.fct.evcomp.domain.Participante) user).getRA();
                 userData.put("ra", ra != null ? ra : "");

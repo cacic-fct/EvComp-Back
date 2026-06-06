@@ -5,6 +5,8 @@ import br.unesp.fct.evcomp.domain.Participante;
 import br.unesp.fct.evcomp.domain.TipoContabilizacao;
 import br.unesp.fct.evcomp.repository.EventoRepository;
 import br.unesp.fct.evcomp.repository.ParticipanteRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +23,9 @@ public class EventoController {
     private final EventoRepository eventoRepository;
     private final ParticipanteRepository participanteRepository;
     private final br.unesp.fct.evcomp.repository.SessaoRepository sessaoRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Autowired
     public EventoController(EventoRepository eventoRepository, ParticipanteRepository participanteRepository, br.unesp.fct.evcomp.repository.SessaoRepository sessaoRepository) {
@@ -43,9 +48,14 @@ public class EventoController {
         Optional<br.unesp.fct.evcomp.domain.Sessao> sessaoOpt = sessaoRepository.buscarSessaoPorToken(token);
         
         if (sessaoOpt.isPresent() && sessaoOpt.get().isAtiva()) {
-            br.unesp.fct.evcomp.domain.Usuário user = sessaoOpt.get().getUsuario();
-            if (user instanceof br.unesp.fct.evcomp.domain.ColetorDePresenca) {
-                List<Evento> eventosColetados = ((br.unesp.fct.evcomp.domain.ColetorDePresenca) user).getEventosColetados();
+            br.unesp.fct.evcomp.domain.Usuário userSessao = sessaoOpt.get().getUsuario();
+            
+            // Buscar o usuário fresquinho do banco para garantir que as coleções carreguem certo
+            Optional<Participante> partOpt = participanteRepository.buscarParticipantePorId(userSessao.getId());
+            
+            if (partOpt.isPresent() && partOpt.get() instanceof br.unesp.fct.evcomp.domain.ColetorDePresenca) {
+                br.unesp.fct.evcomp.domain.ColetorDePresenca coletor = (br.unesp.fct.evcomp.domain.ColetorDePresenca) partOpt.get();
+                List<Evento> eventosColetados = coletor.getEventosColetados();
                 
                 // Filtra eventos que estão ocorrendo no momento
                 LocalDate dataAtual = LocalDate.now();
@@ -65,14 +75,22 @@ public class EventoController {
     public void buscarEvento(String eventoId) {}
     public void solicitarEventosDisponiveis(String participanteId) {}
 
-    @PostMapping("/{eventoId}/coletores/{coletorId}")
-    public ResponseEntity<?> associarColetorWeb(@PathVariable String eventoId, @PathVariable String coletorId) {
+    @PostMapping("/{eventoId}/coletores/{participanteId}")
+    public ResponseEntity<?> tornarColetor(@PathVariable String eventoId, @PathVariable("participanteId") String participanteId) {
         try {
             Integer evId = Integer.valueOf(eventoId);
-            Integer usuId = Integer.valueOf(coletorId);
+            Optional<Participante> partOpt = participanteRepository.buscarPorRa(participanteId);
+            if (!partOpt.isPresent()) {
+                return ResponseEntity.status(404).body(Map.of("error", "Participante não encontrado com este RA."));
+            }
+            Participante p = partOpt.get();
+            Integer usuId = p.getId();
             
-            // Define o participante como coletor no banco (muda tipo_usuario)
+            // Mutação Nativa: Define o participante como coletor no banco (muda tipo_usuario)
             participanteRepository.tornarColetor(usuId);
+            // Limpa o cache para obrigar o JPA a reler o objeto como ColetorDePresenca
+            entityManager.clear();
+            
             // Insere na tabela N:M
             participanteRepository.associarColetorAoEventoNoBanco(usuId, evId);
             
@@ -83,14 +101,34 @@ public class EventoController {
         }
     }
 
+    @DeleteMapping("/{eventoId}/coletores/{coletorId}")
+    public ResponseEntity<?> removerColetor(@PathVariable String eventoId, @PathVariable String coletorId) {
+        try {
+            Integer evId = Integer.valueOf(eventoId);
+            Integer usuId = Integer.valueOf(coletorId);
+            
+            // Remove do banco a associação na tabela N:M
+            participanteRepository.removerColetorDoEventoNoBanco(usuId, evId);
+            
+            // Verifica se ficou sem eventos
+            int count = participanteRepository.contarEventosDoColetor(usuId);
+            if (count == 0) {
+                // Downgrade: Volta a ser Participante comum
+                participanteRepository.rebaixarParaParticipante(usuId);
+            }
+            
+            entityManager.clear();
+            
+            return ResponseEntity.ok(Map.of("message", "Coletor removido com sucesso."));
+        } catch (Exception e) {
+            System.err.println("Erro ao remover coletor: " + e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro interno ao remover o coletor."));
+        }
+    }
+
     public void selecionarEvento(String eventoId) {}
     public void solicitarEventos() {}
     public void buscarParticipantesPorEvento(String eventoId) {}
-    public void tornarColetor(String participanteId, String eventoId) {
-        participanteRepository.tornarColetor(Integer.valueOf(participanteId));
-        participanteRepository.associarColetorAoEventoNoBanco(Integer.valueOf(participanteId), Integer.valueOf(eventoId));
-    }
-    public void removerColetor(String eventoId, String coletorId) {}
     public void buscarColetoresPorEvento(String eventoId) {}
     public void solicitarDadosCertificados(String participanteId) {}
     @PostMapping
