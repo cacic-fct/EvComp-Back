@@ -16,8 +16,4 @@ public interface PresencaRepository extends JpaRepository<RegistroDePresenca, In
 
     @Query("SELECT p.atividade.id FROM RegistroDePresenca p WHERE p.participante.id = :participanteId AND p.presente = true")
     java.util.List<Integer> buscarAtividadesComPresencaPorParticipante(@Param("participanteId") Integer participanteId);
-
-    default boolean buscarPresencaPorAtividade(String participanteId, String atividadeId) { return false; }
-    default int contarPresencasNoEvento(String participanteId, String eventoId) { return 0; }
-    default boolean salvarPresenca(String atividadeId, String participanteId) { return false; }
 }

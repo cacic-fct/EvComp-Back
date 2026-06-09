@@ -32,11 +32,6 @@ public interface EventoRepository extends JpaRepository<Evento, Integer> {
         return false;
     }
 
-    default Evento buscarEventosDisponiveis(String participanteId) { return null; }
-    default Evento buscarTodosEventos() { return null; }
-    default Evento buscarEventosPorParticipante(String participanteId) { return null; }
-    default TipoContabilizacao buscarTipoEvento(String eventoId) { return null; }
-    default TipoContabilizacao buscarTipoEventoPorAtividade(String atividadeId) { return null; }
-    default boolean salvarEvento(String titulo, Date dataInicio, Date dataTermino, String descricao, String link) { return false; }
-    default boolean atualizarDadosEvento(String titulo, Date dataInicio, Date dataTermino, String descricao, String link) { return false; }
+    @org.springframework.data.jpa.repository.Query("SELECT e FROM Evento e WHERE e.dataFim >= CURRENT_DATE")
+    java.util.List<Evento> buscarEventosDisponiveis();
 }

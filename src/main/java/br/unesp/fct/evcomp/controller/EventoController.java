@@ -39,6 +39,11 @@ public class EventoController {
         return ResponseEntity.ok(eventoRepository.findAll());
     }
 
+    @GetMapping("/disponiveis")
+    public ResponseEntity<List<Evento>> listarEventosDisponiveis() {
+        return ResponseEntity.ok(eventoRepository.buscarEventosDisponiveis());
+    }
+
     @GetMapping("/coletor")
     public ResponseEntity<?> listarEventosDoColetor(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
