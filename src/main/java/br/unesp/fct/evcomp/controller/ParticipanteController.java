@@ -21,7 +21,13 @@ public class ParticipanteController {
         this.participanteRepository = participanteRepository;
     }
 
-    public void buscarParticipante(String participanteId) {
+    @GetMapping("/{id}")
+    public ResponseEntity<?> buscarParticipante(@PathVariable String id) {
+        Participante participante = participanteRepository.buscarParticipantePorId(Integer.valueOf(id)).orElse(null);
+        if (participante == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "Participante não encontrado"));
+        }
+        return ResponseEntity.ok(participante);
     }
 
     @GetMapping
@@ -29,6 +35,17 @@ public class ParticipanteController {
         return ResponseEntity.ok(participanteRepository.findAll());
     }
 
-    public void editarParticipante(String participanteId, String nome, String ra) {
+    @PutMapping("/{id}")
+    public ResponseEntity<?> editarParticipante(@PathVariable String id, @RequestBody Map<String, String> body) {
+        String nome = body.get("nome");
+        String ra = body.get("ra");
+        
+        boolean informacoesAlteradas = participanteRepository.salvarNovasInformacoesParticipante(id, nome, ra);
+        
+        if (informacoesAlteradas) {
+            return ResponseEntity.ok(Map.of("success", true, "message", "Informações atualizadas com sucesso"));
+        } else {
+            return ResponseEntity.status(404).body(Map.of("error", "Participante não encontrado ou falha na atualização"));
+        }
     }
 }

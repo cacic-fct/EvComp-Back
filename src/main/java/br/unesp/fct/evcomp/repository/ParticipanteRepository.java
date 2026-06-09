@@ -15,11 +15,19 @@ public interface ParticipanteRepository extends JpaRepository<Participante, Inte
     Optional<Participante> buscarParticipantePorId(@org.springframework.data.repository.query.Param("id") Integer id);
 
     default boolean salvarNovasInformacoesParticipante(String participanteId, String nome, String ra) {
+        Optional<Participante> p = buscarParticipantePorId(Integer.valueOf(participanteId));
+        if (p.isPresent()) {
+            Participante part = p.get();
+            part.setNome(nome);
+            part.setRA(ra);
+            save(part);
+            return true;
+        }
         return false;
     }
 
-    default Object pegarDadosParticipante(String participanteId) {
-        return null;
+    default Participante pegarDadosParticipante(String participanteId) {
+        return buscarParticipantePorId(Integer.valueOf(participanteId)).orElse(null);
     }
 
     default boolean verificarEmailCadastrado(String email) {

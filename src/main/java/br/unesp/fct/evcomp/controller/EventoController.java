@@ -23,15 +23,17 @@ public class EventoController {
     private final EventoRepository eventoRepository;
     private final ParticipanteRepository participanteRepository;
     private final br.unesp.fct.evcomp.repository.SessaoRepository sessaoRepository;
+    private final br.unesp.fct.evcomp.repository.InscricaoRepository inscricaoRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
 
     @Autowired
-    public EventoController(EventoRepository eventoRepository, ParticipanteRepository participanteRepository, br.unesp.fct.evcomp.repository.SessaoRepository sessaoRepository) {
+    public EventoController(EventoRepository eventoRepository, ParticipanteRepository participanteRepository, br.unesp.fct.evcomp.repository.SessaoRepository sessaoRepository, br.unesp.fct.evcomp.repository.InscricaoRepository inscricaoRepository) {
         this.eventoRepository = eventoRepository;
         this.participanteRepository = participanteRepository;
         this.sessaoRepository = sessaoRepository;
+        this.inscricaoRepository = inscricaoRepository;
     }
 
     @GetMapping
@@ -42,6 +44,13 @@ public class EventoController {
     @GetMapping("/disponiveis")
     public ResponseEntity<List<Evento>> listarEventosDisponiveis() {
         return ResponseEntity.ok(eventoRepository.buscarEventosDisponiveis());
+    }
+
+    @GetMapping("/{id}/participantes")
+    public ResponseEntity<List<Participante>> listarParticipantesDoEvento(@PathVariable Integer id) {
+        // Conforme Diagrama de Colaboração: buscarParticipantesPorEvento
+        List<Participante> participantes = inscricaoRepository.buscarParticipantesPorEvento(id);
+        return ResponseEntity.ok(participantes);
     }
 
     @GetMapping("/coletor")
