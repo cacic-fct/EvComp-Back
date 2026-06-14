@@ -4,14 +4,15 @@ import br.unesp.fct.evcomp.domain.Certificado;
 import br.unesp.fct.evcomp.domain.Participante;
 import br.unesp.fct.evcomp.domain.Evento;
 import br.unesp.fct.evcomp.domain.Atividade;
-import com.lowagie.text.Document;
-import com.lowagie.text.Element;
-import com.lowagie.text.Font;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.PageSize;
-import com.lowagie.text.pdf.PdfWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
+import java.nio.charset.StandardCharsets;
+
+import org.springframework.util.FileCopyUtils;
+import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 
 public class CertificadoGeralBuilder implements CertificadoBuilder {
 
@@ -44,53 +45,42 @@ public class CertificadoGeralBuilder implements CertificadoBuilder {
 
     @Override
     public void buildPdfDocument() {
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            Document document = new Document(PageSize.A4.rotate());
-            PdfWriter.getInstance(document, baos);
-            document.open();
+        try {
+            String templateName = "template.html";
+            
+            InputStream in = getClass().getResourceAsStream("/templates/" + templateName);
+            if (in == null) {
+                throw new RuntimeException("Template HTML não encontrado: " + templateName);
+            }
 
-            Font titleFont = new Font(Font.HELVETICA, 28, Font.BOLD);
-            Font bodyFont = new Font(Font.TIMES_ROMAN, 16, Font.NORMAL);
-            Font metaFont = new Font(Font.HELVETICA, 10, Font.ITALIC);
+            byte[] bdata = FileCopyUtils.copyToByteArray(in);
+            String html = new String(bdata, StandardCharsets.UTF_8);
 
-            Paragraph spacing = new Paragraph(" ");
-            spacing.setSpacingBefore(30);
+            html = html.replace("$nomeParticipante", participante.getNome().toUpperCase());
+            html = html.replace("$nomeEventoOuAtividade", evento.getTitulo());
+            html = html.replace("$eventoOUatividade", "do evento");
+            html = html.replace("$nomeEvento", evento.getTitulo());
+            html = html.replace("$cargaHoraria", String.valueOf(cargaHoraria));
+            
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy", new Locale("pt", "BR"));
+            String dataEmissaoStr = LocalDateTime.now().format(formatter);
+            String dataFimStr = evento.getDataFim().format(formatter);
+            
+            html = html.replace("$dataFim", dataFimStr);
+            html = html.replace("$dataAtual", dataEmissaoStr);
+            html = html.replace("$papel", papel != null ? papel : "Ouvinte");
 
-            Paragraph title = new Paragraph("CERTIFICADO DE PARTICIPAÇÃO", titleFont);
-            title.setAlignment(Element.ALIGN_CENTER);
-            title.setSpacingAfter(40);
-            document.add(title);
-            document.add(spacing);
-
-            String text = String.format(
-                "Certificamos que %s participou do evento \"%s\" com o papel de %s, obtendo uma carga horária total de %d horas.",
-                participante.getNome().toUpperCase(),
-                evento.getTitulo(),
-                papel.toLowerCase(),
-                cargaHoraria
-            );
-            Paragraph body = new Paragraph(text, bodyFont);
-            body.setAlignment(Element.ALIGN_CENTER);
-            body.setLeading(24);
-            document.add(body);
-            document.add(spacing);
-            document.add(spacing);
-
-            LocalDateTime agora = LocalDateTime.now();
-            String dateText = String.format("Presidente Prudente, %02d/%02d/%d", agora.getDayOfMonth(), agora.getMonthValue(), agora.getYear());
-            Paragraph datePara = new Paragraph(dateText, bodyFont);
-            datePara.setAlignment(Element.ALIGN_CENTER);
-            document.add(datePara);
-
-            Paragraph signature = new Paragraph("_____________________________________\nComissão Organizadora - FCT UNESP", metaFont);
-            signature.setAlignment(Element.ALIGN_CENTER);
-            signature.setSpacingBefore(50);
-            document.add(signature);
-
-            document.close();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            PdfRendererBuilder builder = new PdfRendererBuilder();
+            builder.useFastMode();
+            builder.withHtmlContent(html, getClass().getResource("/templates/").toExternalForm());
+            builder.toStream(baos);
+            builder.run();
+            
             this.pdfBytes = baos.toByteArray();
+
         } catch (Exception e) {
-            throw new RuntimeException("Falha ao gerar PDF do certificado geral", e);
+            throw new RuntimeException("Falha ao gerar PDF do certificado geral com template DOCX", e);
         }
     }
 
@@ -106,5 +96,10 @@ public class CertificadoGeralBuilder implements CertificadoBuilder {
             null
         );
         return this.certificado;
+    }
+
+    @Override
+    public byte[] getPdfBytes() {
+        return this.pdfBytes;
     }
 }

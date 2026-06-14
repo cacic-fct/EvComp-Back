@@ -10,4 +10,5 @@ public interface CertificadoBuilder {
     void buildConteudo(int cargaHoraria, String papel, String detalheExtra);
     void buildPdfDocument();
     Certificado obterCertificado();
+    byte[] getPdfBytes();
 }

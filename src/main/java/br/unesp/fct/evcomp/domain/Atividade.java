@@ -46,6 +46,7 @@ public class Atividade {
     @JoinColumn(name = "idEvento", nullable = false)
     private Evento evento;
 
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "ministrante_atividade",
