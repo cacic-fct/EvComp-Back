@@ -20,7 +20,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/inscricoes")
-@CrossOrigin(origins = "*")
+
 public class InscricaoController {
 
     private final InscricaoRepository inscricaoRepository;

@@ -17,7 +17,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/atividades")
-@CrossOrigin(origins = "*")
+
 public class AtividadeController {
 
     private final AtividadeRepository atividadeRepository;

@@ -17,10 +17,17 @@ public class RelatorioService {
     }
 
     public Relatorio gerarRelatorio(Object dadosEvento, TipoRelatorio tipoRelatorio) {
-        return null;
+        if (!(dadosEvento instanceof Evento)) {
+            throw new IllegalArgumentException("dadosEvento deve ser uma instância de Evento");
+        }
+        Evento evento = (Evento) dadosEvento;
+        
+        RelatorioStrategyFactory estrategia = strategyFactory.obterEstrategia(tipoRelatorio.name());
+        Object dadosProcessados = estrategia.processarDados(evento);
+        return estrategia.gerarPDF(dadosProcessados, evento);
     }
 
-    public TipoRelatorio obterTiposRelatoriosDisponiveis() {
-        return null;
+    public TipoRelatorio[] obterTiposRelatoriosDisponiveis() {
+        return TipoRelatorio.values();
     }
 }

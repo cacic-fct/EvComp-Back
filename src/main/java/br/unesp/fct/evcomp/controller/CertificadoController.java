@@ -27,7 +27,7 @@ import java.util.Set;
 
 @RestController
 @RequestMapping("/api/certificados")
-@CrossOrigin(origins = "*")
+
 public class CertificadoController {
 
     private final CertificadoService certificadoService;

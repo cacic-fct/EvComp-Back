@@ -17,7 +17,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/eventos")
-@CrossOrigin(origins = "*")
+
 public class EventoController {
 
     private final EventoRepository eventoRepository;

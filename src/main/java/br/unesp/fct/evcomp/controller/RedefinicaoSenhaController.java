@@ -14,7 +14,7 @@ import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/redefinicao-senha")
-@CrossOrigin(origins = "*")
+
 public class RedefinicaoSenhaController {
 
     @Autowired
