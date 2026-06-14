@@ -154,7 +154,7 @@ public class CertificadoController {
             Participante participante = participanteRepository.findById(participanteId)
                 .orElseThrow(() -> new RuntimeException("Participante não encontrado"));
 
-            byte[] pdfBytes;
+            byte[] pdfBytes = null;
             String nomeArquivo = "";
 
             if ("EVENTO".equals(tipo)) {
@@ -168,10 +168,10 @@ public class CertificadoController {
                     return ResponseEntity.badRequest().body(Map.of("error", "Presença mínima não atingida neste evento."));
                 }
 
-                pdfBytes = certificadoService.emitirCertificado(participante, evento, null);
+                pdfBytes = certificadoService.gerarCertificado(participante, evento, null);
                 nomeArquivo = participante.getNome() + " - " + evento.getTitulo() + ".pdf";
 
-            } else {
+            } else if ("ATIVIDADE".equals(tipo)) {
                 Atividade atividade = atividadeRepository.findById(alvoId).orElseThrow(() -> new RuntimeException("Atividade não encontrada"));
                 Evento evento = atividade.getEvento();
                 if (!isEventoFinalizado(evento)) {
@@ -189,7 +189,7 @@ public class CertificadoController {
                     }
                 }
 
-                pdfBytes = certificadoService.emitirCertificado(participante, evento, atividade);
+                pdfBytes = certificadoService.gerarCertificado(participante, evento, atividade);
                 nomeArquivo = participante.getNome() + " - " + atividade.getTitulo() + ".pdf";
             }
 

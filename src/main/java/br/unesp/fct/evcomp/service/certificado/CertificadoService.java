@@ -22,13 +22,15 @@ public class CertificadoService {
     private final PresencaRepository presencaRepository;
     private final AtividadeRepository atividadeRepository;
     private final InscricaoRepository inscricaoRepository;
+    private final br.unesp.fct.evcomp.service.PDFGenerator pdfGenerator;
 
     @Autowired
-    public CertificadoService(CertificadoBuilderFactory builderFactory, PresencaRepository presencaRepository, AtividadeRepository atividadeRepository, InscricaoRepository inscricaoRepository) {
+    public CertificadoService(CertificadoBuilderFactory builderFactory, PresencaRepository presencaRepository, AtividadeRepository atividadeRepository, InscricaoRepository inscricaoRepository, br.unesp.fct.evcomp.service.PDFGenerator pdfGenerator) {
         this.builderFactory = builderFactory;
         this.presencaRepository = presencaRepository;
         this.atividadeRepository = atividadeRepository;
         this.inscricaoRepository = inscricaoRepository;
+        this.pdfGenerator = pdfGenerator;
     }
 
     public boolean verificarPresencaPorEvento(String participanteId, String eventoId) {
@@ -39,23 +41,15 @@ public class CertificadoService {
         return false;
     }
 
-    public Certificado gerarCertificado(Object dadosEmissao) {
-        return null;
-    }
-
-    public Object processarRegrasEmissao(Object dadosParticipante, String eventoId, String atividadeId) {
-        return null;
-    }
-
     @Transactional
-    public byte[] emitirCertificado(Participante participante, Evento evento, Atividade atividade) {
+    public byte[] gerarCertificado(Participante participante, Evento evento, Atividade atividade) {
         if (atividade != null) {
             boolean isMinistrante = atividade.getMinistrantes().stream().anyMatch(m -> m.getId().equals(participante.getId()));
             if (isMinistrante) {
                 CertificadoBuilder builder = builderFactory.obterBuilder("ATIVIDADE");
                 builder.buildMetaDados(participante, evento, atividade, "ATIVIDADE");
                 builder.buildConteudo(atividade.getCargaHorariaMinistrante(), "ministrante", null);
-                builder.buildPdfDocument();
+                builder.gerarPDF(pdfGenerator);
                 Certificado cert = builder.obterCertificado();
                 return builder.getPdfBytes();
             }
@@ -72,7 +66,7 @@ public class CertificadoService {
             CertificadoBuilder builder = builderFactory.obterBuilder("ATIVIDADE");
             builder.buildMetaDados(participante, evento, atividade, "ATIVIDADE");
             builder.buildConteudo(atividade.getCargaHorariaTotal(), "participante", null);
-            builder.buildPdfDocument();
+            builder.gerarPDF(pdfGenerator);
             Certificado cert = builder.obterCertificado();
             // Salvar no repositório se necessário
             return builder.getPdfBytes();
@@ -130,7 +124,7 @@ public class CertificadoService {
             CertificadoBuilder builder = builderFactory.obterBuilder("GERAL");
             builder.buildMetaDados(participante, evento, null, "GERAL");
             builder.buildConteudo(cargaHorariaFinal, "participante", null);
-            builder.buildPdfDocument();
+            builder.gerarPDF(pdfGenerator);
             Certificado cert = builder.obterCertificado();
             // Salvar no repositório se necessário
             return builder.getPdfBytes();

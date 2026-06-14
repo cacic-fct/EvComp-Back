@@ -12,7 +12,7 @@ import java.util.Locale;
 import java.nio.charset.StandardCharsets;
 
 import org.springframework.util.FileCopyUtils;
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import br.unesp.fct.evcomp.service.PDFGenerator;
 
 public class CertificadoAtividadeBuilder implements CertificadoBuilder {
 
@@ -44,7 +44,7 @@ public class CertificadoAtividadeBuilder implements CertificadoBuilder {
     }
 
     @Override
-    public void buildPdfDocument() {
+    public void gerarPDF(PDFGenerator pdfGenerator) {
         try {
             String templateName = "template.html";
             
@@ -71,14 +71,7 @@ public class CertificadoAtividadeBuilder implements CertificadoBuilder {
             html = html.replace("$dataAtual", dataEmissaoStr);
             html = html.replace("$papel", papel != null ? papel : "Ouvinte");
 
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            PdfRendererBuilder builder = new PdfRendererBuilder();
-            builder.useFastMode();
-            builder.withHtmlContent(html, getClass().getResource("/templates/").toExternalForm());
-            builder.toStream(baos);
-            builder.run();
-            
-            this.pdfBytes = baos.toByteArray();
+            this.pdfBytes = pdfGenerator.gerarPDF(html);
 
         } catch (Exception e) {
             throw new RuntimeException("Falha ao gerar PDF do certificado de atividade com template DOCX", e);

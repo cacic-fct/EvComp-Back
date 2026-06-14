@@ -12,7 +12,8 @@ public class PDFGenerator {
         try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
             PdfRendererBuilder builder = new PdfRendererBuilder();
             builder.useFastMode();
-            builder.withHtmlContent(htmlContent, null);
+            String baseUri = getClass().getResource("/templates/").toExternalForm();
+            builder.withHtmlContent(htmlContent, baseUri);
             builder.toStream(os);
             builder.run();
             return os.toByteArray();
