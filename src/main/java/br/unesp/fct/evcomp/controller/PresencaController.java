@@ -63,6 +63,11 @@ public class PresencaController {
             }
             Atividade atividade = atvOpt.get();
 
+            java.time.LocalDateTime inicioAtividade = java.time.LocalDateTime.of(atividade.getDataInicio(), atividade.getHorarioInicio());
+            if (java.time.LocalDateTime.now().isBefore(inicioAtividade)) {
+                return exibirMensagemErro("A atividade ainda não foi iniciada.", 403);
+            }
+
             // Buscar inscrições ativas na atividade para "brute-force" match no TOTP
             List<Inscrição> inscricoes = inscricaoRepository.buscarInscricoesPorAtividade(atividadeId);
             
