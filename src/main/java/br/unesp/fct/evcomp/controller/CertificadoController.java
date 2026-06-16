@@ -41,6 +41,9 @@ public class CertificadoController {
     private PresencaRepository presencaRepository;
 
     @Autowired
+    private br.unesp.fct.evcomp.service.CalculadoraCargaHoraria calculadoraCargaHoraria;
+
+    @Autowired
     public CertificadoController(CertificadoService certificadoService, CertificadoRepository certificadoRepository, ParticipanteRepository participanteRepository, EventoRepository eventoRepository, AtividadeRepository atividadeRepository, InscricaoRepository inscricaoRepository) {
         this.certificadoService = certificadoService;
         this.certificadoRepository = certificadoRepository;
@@ -51,7 +54,7 @@ public class CertificadoController {
     }
 
     @GetMapping("/disponiveis/{participanteId}")
-    public ResponseEntity<?> listarDisponiveis(@PathVariable Integer participanteId) {
+    public ResponseEntity<?> selecionarEventoOuAtividade(@PathVariable Integer participanteId) {
         List<br.unesp.fct.evcomp.domain.Inscrição> inscricoes = inscricaoRepository.buscarInscricoesAtivasPorParticipante(participanteId);
         List<Atividade> atividadesMinistradas = atividadeRepository.buscarAtividadesPorMinistrante(participanteId);
         List<Map<String, Object>> response = new ArrayList<>();
@@ -64,9 +67,9 @@ public class CertificadoController {
             map.put("titulo", atividade.getTitulo() + " (" + evento.getTitulo() + ") [Ministrante]");
             map.put("cargaHoraria", atividade.getCargaHorariaMinistrante());
 
-            boolean finalizado = isEventoFinalizado(evento);
+            boolean andamento = eventoRepository.checarAndamentoEvento(String.valueOf(evento.getId()));
 
-            if (!finalizado) {
+            if (andamento) {
                 map.put("liberado", false);
                 map.put("motivo", "Em andamento");
             } else {
@@ -88,13 +91,13 @@ public class CertificadoController {
                     map.put("titulo", atividade.getTitulo() + " (" + evento.getTitulo() + ")");
                     map.put("cargaHoraria", atividade.getCargaHorariaTotal());
 
-                    boolean presente = presencaRepository.buscarPresencaPorAtividade(atividade.getId(), participanteId).filter(p -> p.isPresente()).isPresent();
-                    boolean finalizado = isEventoFinalizado(evento);
+                    boolean presente = certificadoService.verificarPresencaPorAtividade(participanteId.toString(), String.valueOf(atividade.getId()));
+                    boolean andamento = eventoRepository.checarAndamentoEvento(String.valueOf(evento.getId()));
 
                     if (!presente) {
                         map.put("liberado", false);
                         map.put("motivo", "Falta de Presença");
-                    } else if (!finalizado) {
+                    } else if (andamento) {
                         map.put("liberado", false);
                         map.put("motivo", "Em andamento");
                     } else {
@@ -103,42 +106,35 @@ public class CertificadoController {
                     }
                     response.add(map);
                 }
-            } else {
-                // POR_CARGA_TOTAL
-                int totalAtividades = atividades.size();
-                int presencas = 0;
-                int cargaHorariaTotal = 0;
-
-                for (Atividade a : atividades) {
-                    if (presencaRepository.buscarPresencaPorAtividade(a.getId(), participanteId).filter(p -> p.isPresente()).isPresent()) {
-                        presencas++;
-                    }
-                    cargaHorariaTotal += a.getCargaHorariaTotal();
-                }
-
-                Map<String, Object> mapEv = new HashMap<>();
-                mapEv.put("tipo", "EVENTO");
-                mapEv.put("id", evento.getId());
-                mapEv.put("titulo", evento.getTitulo());
-
-                double ratio = totalAtividades > 0 ? (double) presencas / totalAtividades : 0;
-                boolean frequenciaSuficiente = totalAtividades == 0 || ratio >= 0.5;
-                boolean finalizado = isEventoFinalizado(evento);
-
-                mapEv.put("cargaHoraria", frequenciaSuficiente ? (ratio == 1.0 ? cargaHorariaTotal : cargaHorariaTotal / 2) : 0);
-
-                if (!frequenciaSuficiente || presencas == 0) {
-                    mapEv.put("liberado", false);
-                    mapEv.put("motivo", presencas == 0 ? "Falta de Presença" : "Frequência Insuficiente");
-                } else if (!finalizado) {
-                    mapEv.put("liberado", false);
-                    mapEv.put("motivo", "Em andamento");
-                } else {
-                    mapEv.put("liberado", true);
-                    mapEv.put("motivo", "Liberado");
-                }
-                response.add(mapEv);
             }
+            
+            // Certificado GERAL do evento é gerado sempre, inclusive para "POR_ATIVIDADE"
+            int totalAtividades = atividades.size();
+            int presencas = presencaRepository.contarPresencasNoEvento(participanteId.toString(), String.valueOf(evento.getId()));
+            int cargaHorariaTotal = calculadoraCargaHoraria.calcularCargaHorariaTotal(evento);
+
+            Map<String, Object> mapEv = new HashMap<>();
+            mapEv.put("tipo", "EVENTO");
+            mapEv.put("id", evento.getId());
+            mapEv.put("titulo", evento.getTitulo());
+
+            boolean frequenciaSuficiente = certificadoService.verificarPresencaPorEvento(participanteId.toString(), String.valueOf(evento.getId()));
+            boolean andamento = eventoRepository.checarAndamentoEvento(String.valueOf(evento.getId()));
+            double ratio = totalAtividades > 0 ? (double) presencas / totalAtividades : 0;
+
+            mapEv.put("cargaHoraria", frequenciaSuficiente ? (ratio == 1.0 ? cargaHorariaTotal : cargaHorariaTotal / 2) : 0);
+
+            if (!frequenciaSuficiente || presencas == 0) {
+                mapEv.put("liberado", false);
+                mapEv.put("motivo", presencas == 0 ? "Falta de Presença" : "Frequência Insuficiente");
+            } else if (andamento) {
+                mapEv.put("liberado", false);
+                mapEv.put("motivo", "Em andamento");
+            } else {
+                mapEv.put("liberado", true);
+                mapEv.put("motivo", "Liberado");
+            }
+            response.add(mapEv);
         }
 
         return ResponseEntity.ok(response);
@@ -157,41 +153,22 @@ public class CertificadoController {
             byte[] pdfBytes = null;
             String nomeArquivo = "";
 
-            if ("EVENTO".equals(tipo)) {
-                Evento evento = eventoRepository.findById(alvoId).orElseThrow(() -> new RuntimeException("Evento não encontrado"));
-                if (!isEventoFinalizado(evento)) {
-                    return ResponseEntity.badRequest().body(Map.of("error", "O evento ainda não foi finalizado."));
-                }
-                
-                long presencas = presencaRepository.contarPresencasNoEvento(participanteId, alvoId);
-                if (presencas == 0) {
-                    return ResponseEntity.badRequest().body(Map.of("error", "Presença mínima não atingida neste evento."));
-                }
+            Integer eventoId = "EVENTO".equals(tipo) ? alvoId : null;
+            Integer atividadeId = "ATIVIDADE".equals(tipo) ? alvoId : null;
 
-                pdfBytes = certificadoService.gerarCertificado(participante, evento, null);
-                nomeArquivo = participante.getNome() + " - " + evento.getTitulo() + ".pdf";
+            Map<String, Object> dadosEmissao = certificadoService.processarRegrasEmissao(participante, eventoId, atividadeId);
 
-            } else if ("ATIVIDADE".equals(tipo)) {
-                Atividade atividade = atividadeRepository.findById(alvoId).orElseThrow(() -> new RuntimeException("Atividade não encontrada"));
-                Evento evento = atividade.getEvento();
-                if (!isEventoFinalizado(evento)) {
-                    return ResponseEntity.badRequest().body(Map.of("error", "O evento ao qual a atividade pertence ainda não foi finalizado."));
-                }
-
-                boolean isMinistrante = atividade.getMinistrantes().stream().anyMatch(m -> m.getId().equals(participanteId));
-
-                if (!isMinistrante) {
-                    boolean estevePresente = presencaRepository.buscarPresencaPorAtividade(alvoId, participanteId)
-                        .filter(p -> p.isPresente()).isPresent();
-                    
-                    if (!estevePresente) {
-                        return ResponseEntity.badRequest().body(Map.of("error", "Presença não registrada para esta atividade."));
-                    }
-                }
-
-                pdfBytes = certificadoService.gerarCertificado(participante, evento, atividade);
-                nomeArquivo = participante.getNome() + " - " + atividade.getTitulo() + ".pdf";
+            if (dadosEmissao.containsKey("error")) {
+                return exibirMensagemErro((String) dadosEmissao.get("error"), 400);
             }
+
+            Evento evento = (Evento) dadosEmissao.get("evento");
+            Atividade atividade = atividadeId != null ? (Atividade) dadosEmissao.get("atividade") : null;
+
+
+
+            pdfBytes = certificadoService.gerarCertificado(participante, evento, atividade);
+            nomeArquivo = participante.getNome() + " - " + (atividade != null ? atividade.getTitulo() : evento.getTitulo()) + ".pdf";
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
@@ -210,14 +187,7 @@ public class CertificadoController {
         }
     }
 
-    private boolean isEventoFinalizado(Evento evento) {
-        if (evento.getDataFim() == null) {
-            return false;
-        }
-        if (evento.getDataInicio() != null && evento.getDataInicio().equals(evento.getDataFim())) {
-            return LocalDate.now().isAfter(evento.getDataFim());
-        } else {
-            return !evento.getDataFim().isAfter(LocalDate.now());
-        }
+    public ResponseEntity<?> exibirMensagemErro(String msg, int status) {
+        return ResponseEntity.status(status).body(Map.of("error", msg));
     }
 }
