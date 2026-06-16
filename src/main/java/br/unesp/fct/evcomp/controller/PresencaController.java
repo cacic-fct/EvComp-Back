@@ -67,6 +67,11 @@ public class PresencaController {
             if (java.time.LocalDateTime.now().isBefore(inicioAtividade)) {
                 return exibirMensagemErro("A atividade ainda não foi iniciada.", 403);
             }
+            
+            java.time.LocalDateTime fimAtividade = java.time.LocalDateTime.of(atividade.getDataFim(), atividade.getHorarioFim());
+            if (java.time.LocalDateTime.now().isAfter(fimAtividade)) {
+                return exibirMensagemErro("A atividade já foi encerrada. Não é mais possível registrar presença.", 403);
+            }
 
             // Buscar inscrições ativas na atividade para "brute-force" match no TOTP
             List<Inscrição> inscricoes = inscricaoRepository.buscarInscricoesPorAtividade(atividadeId);
