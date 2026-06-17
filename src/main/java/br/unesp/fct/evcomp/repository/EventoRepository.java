@@ -26,12 +26,21 @@ public interface EventoRepository extends JpaRepository<Evento, Integer> {
 
     default boolean checarAndamentoEvento(String eventoId) { 
         Optional<Evento> ev = buscarEventoPorIdInt(Integer.valueOf(eventoId));
-        if (ev.isPresent() && ev.get().getDataFim() != null) {
-            return ev.get().getDataFim().isBefore(java.time.LocalDate.now()); // ended
+        if (ev.isPresent()) {
+            Evento evento = ev.get();
+            if (evento.getDataFim() == null) return true;
+            if (evento.getDataInicio() != null && evento.getDataInicio().equals(evento.getDataFim())) {
+                return !java.time.LocalDate.now().isAfter(evento.getDataFim());
+            } else {
+                return evento.getDataFim().isAfter(java.time.LocalDate.now());
+            }
         }
         return false;
     }
 
     @org.springframework.data.jpa.repository.Query("SELECT e FROM Evento e WHERE e.dataFim >= CURRENT_DATE")
     java.util.List<Evento> buscarEventosDisponiveis();
+    default TipoContabilizacao buscarTipoEvento(Integer eventoId) {
+        return findById(eventoId).map(Evento::getTipoContabilizacao).orElse(null);
+    }
 }

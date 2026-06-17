@@ -20,7 +20,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/presencas")
-@CrossOrigin(origins = "*")
+
 public class PresencaController {
 
     private final AtividadeRepository atividadeRepository;
@@ -62,6 +62,16 @@ public class PresencaController {
                 return exibirMensagemErro("Atividade não encontrada.", 404);
             }
             Atividade atividade = atvOpt.get();
+
+            java.time.LocalDateTime inicioAtividade = java.time.LocalDateTime.of(atividade.getDataInicio(), atividade.getHorarioInicio());
+            if (java.time.LocalDateTime.now().isBefore(inicioAtividade)) {
+                return exibirMensagemErro("A atividade ainda não foi iniciada.", 403);
+            }
+            
+            java.time.LocalDateTime fimAtividade = java.time.LocalDateTime.of(atividade.getDataFim(), atividade.getHorarioFim());
+            if (java.time.LocalDateTime.now().isAfter(fimAtividade)) {
+                return exibirMensagemErro("A atividade já foi encerrada. Não é mais possível registrar presença.", 403);
+            }
 
             // Buscar inscrições ativas na atividade para "brute-force" match no TOTP
             List<Inscrição> inscricoes = inscricaoRepository.buscarInscricoesPorAtividade(atividadeId);

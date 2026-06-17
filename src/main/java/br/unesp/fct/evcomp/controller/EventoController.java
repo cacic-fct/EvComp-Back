@@ -17,7 +17,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/eventos")
-@CrossOrigin(origins = "*")
+
 public class EventoController {
 
     private final EventoRepository eventoRepository;
@@ -54,11 +54,27 @@ public class EventoController {
     }
 
     @GetMapping("/coletor")
-    public ResponseEntity<?> listarEventosDoColetor(@RequestHeader(value = "Authorization", required = false) String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+    public ResponseEntity<?> listarEventosDoColetor(jakarta.servlet.http.HttpServletRequest request) {
+        String token = null;
+        if (request.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                if ("auth_token".equals(cookie.getName())) {
+                    token = cookie.getValue();
+                    break;
+                }
+            }
+        }
+        if (token == null) {
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                token = authHeader.substring(7);
+            }
+        }
+        
+        if (token == null) {
             return ResponseEntity.status(401).body(Map.of("error", "Token não fornecido ou inválido."));
         }
-        String token = authHeader.substring(7);
+        
         Optional<br.unesp.fct.evcomp.domain.Sessao> sessaoOpt = sessaoRepository.buscarSessaoPorToken(token);
         
         if (sessaoOpt.isPresent() && sessaoOpt.get().isAtiva()) {

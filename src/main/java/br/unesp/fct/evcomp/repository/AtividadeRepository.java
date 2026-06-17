@@ -26,8 +26,23 @@ public interface AtividadeRepository extends JpaRepository<Atividade, Integer> {
     default Atividade buscarAtividadesPorEvento(String eventoId) { return null; }
     default int consultarVagasDisponiveis(String atividadeId) { return 0; }
     default Atividade buscarAtividadesPorParticipante(String participanteId) { return null; }
-    default boolean checarAndamentoAtividade(String atividadeId) { return false; }
-    default int buscarCargaHorariaAtividade(String atividadeId) { return 0; }
+    default boolean checarAndamentoAtividade(String atividadeId) { 
+        Optional<Atividade> atv = findById(Integer.valueOf(atividadeId));
+        if (atv.isPresent()) {
+            Atividade atividade = atv.get();
+            if (atividade.getDataFim() == null) return true;
+            return !java.time.LocalDate.now().isAfter(atividade.getDataFim());
+        }
+        return false;
+    }
+    default int buscarCargaHorariaAtividade(Integer atividadeId) { 
+        return findById(atividadeId).map(Atividade::getCargaHorariaTotal).orElse(0); 
+    }
+    
+    default br.unesp.fct.evcomp.domain.TipoContabilizacao buscarTipoEventoPorAtividade(Integer atividadeId) {
+        return findById(atividadeId).map(a -> a.getEvento().getTipoContabilizacao()).orElse(null);
+    }
+    
     default Atividade salvarAtividade(Atividade atividade) { return null; }
     default Atividade buscarAtividadePorTitulo(String tituloAtividade) { return null; }
 }

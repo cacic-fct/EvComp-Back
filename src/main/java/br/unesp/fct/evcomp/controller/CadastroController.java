@@ -10,7 +10,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/cadastro")
-@CrossOrigin(origins = "*")
+
 public class CadastroController {
 
     private final ParticipanteRepository participanteRepository;

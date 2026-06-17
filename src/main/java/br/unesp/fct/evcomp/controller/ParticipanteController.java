@@ -12,7 +12,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/participantes")
-@CrossOrigin(origins = "*")
+
 public class ParticipanteController {
 
     private final ParticipanteRepository participanteRepository;

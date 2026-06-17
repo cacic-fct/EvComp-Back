@@ -4,14 +4,11 @@ import br.unesp.fct.evcomp.domain.Evento;
 import br.unesp.fct.evcomp.domain.Participante;
 import br.unesp.fct.evcomp.domain.Relatorio;
 import br.unesp.fct.evcomp.repository.InscricaoRepository;
-import com.lowagie.text.Document;
-import com.lowagie.text.Element;
-import com.lowagie.text.Font;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.PageSize;
-import com.lowagie.text.pdf.PdfPTable;
-import com.lowagie.text.pdf.PdfPCell;
-import com.lowagie.text.pdf.PdfWriter;
+import br.unesp.fct.evcomp.service.PDFGenerator;
+import org.springframework.util.FileCopyUtils;
+
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import java.io.ByteArrayOutputStream;
@@ -19,15 +16,18 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Locale;
 
 @Component
-public class GraficoComparativoStrategy implements RelatorioStrategy {
+public class GraficoComparativoStrategy extends RelatorioStrategyFactory {
 
     private final InscricaoRepository inscricaoRepository;
+    private final PDFGenerator pdfGenerator;
 
     @Autowired
-    public GraficoComparativoStrategy(InscricaoRepository inscricaoRepository) {
+    public GraficoComparativoStrategy(InscricaoRepository inscricaoRepository, PDFGenerator pdfGenerator) {
         this.inscricaoRepository = inscricaoRepository;
+        this.pdfGenerator = pdfGenerator;
     }
 
     @Override
@@ -63,79 +63,34 @@ public class GraficoComparativoStrategy implements RelatorioStrategy {
         double pctInternos = total > 0 ? ((double) internos / total) * 100 : 0.0;
         double pctExternos = total > 0 ? ((double) externos / total) * 100 : 0.0;
 
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            Document document = new Document(PageSize.A4);
-            PdfWriter.getInstance(document, baos);
-            document.open();
+        try {
+            InputStream in = getClass().getResourceAsStream("/templates/relatorio_grafico.html");
+            if (in == null) {
+                throw new RuntimeException("Template HTML não encontrado: relatorio_grafico.html");
+            }
+            byte[] bdata = FileCopyUtils.copyToByteArray(in);
+            String html = new String(bdata, StandardCharsets.UTF_8);
 
-            Font titleFont = new Font(Font.HELVETICA, 20, Font.BOLD);
-            Font sectionFont = new Font(Font.HELVETICA, 14, Font.BOLD);
-            Font normalFont = new Font(Font.HELVETICA, 11, Font.NORMAL);
+            html = html.replace("$nomeEvento", evento.getTitulo());
+            html = html.replace("$dataGeracao", LocalDateTime.now().toString());
 
-            Paragraph title = new Paragraph("Relatório Comparativo de Participantes", titleFont);
-            title.setAlignment(Element.ALIGN_CENTER);
-            title.setSpacingAfter(10);
-            document.add(title);
+            html = html.replace("$qtdInternos", String.valueOf(internos));
+            html = html.replace("$pctInternos", String.format(Locale.US, "%.2f%%", pctInternos));
+            
+            html = html.replace("$qtdExternos", String.valueOf(externos));
+            html = html.replace("$pctExternos", String.format(Locale.US, "%.2f%%", pctExternos));
+            
+            html = html.replace("$qtdTotal", String.valueOf(total));
 
-            Paragraph eventTitle = new Paragraph("Evento: " + evento.getTitulo(), sectionFont);
-            eventTitle.setAlignment(Element.ALIGN_CENTER);
-            eventTitle.setSpacingAfter(30);
-            document.add(eventTitle);
-
-            PdfPTable table = new PdfPTable(3);
-            table.setWidthPercentage(80);
-            table.setHorizontalAlignment(Element.ALIGN_CENTER);
-            table.setWidths(new float[]{40f, 30f, 30f});
-
-            table.addCell(new PdfPCell(new Paragraph("Categoria", sectionFont)));
-            table.addCell(new PdfPCell(new Paragraph("Quantidade", sectionFont)));
-            table.addCell(new PdfPCell(new Paragraph("Percentual", sectionFont)));
-
-            table.addCell(new PdfPCell(new Paragraph("Internos (UNESP)", normalFont)));
-            table.addCell(new PdfPCell(new Paragraph(String.valueOf(internos), normalFont)));
-            table.addCell(new PdfPCell(new Paragraph(String.format("%.2f%%", pctInternos), normalFont)));
-
-            table.addCell(new PdfPCell(new Paragraph("Externos (Outros)", normalFont)));
-            table.addCell(new PdfPCell(new Paragraph(String.valueOf(externos), normalFont)));
-            table.addCell(new PdfPCell(new Paragraph(String.format("%.2f%%", pctExternos), normalFont)));
-
-            table.addCell(new PdfPCell(new Paragraph("Total Geral", sectionFont)));
-            table.addCell(new PdfPCell(new Paragraph(String.valueOf(total), sectionFont)));
-            table.addCell(new PdfPCell(new Paragraph("100.00%", sectionFont)));
-
-            document.add(table);
-
-            Paragraph chartTitle = new Paragraph("\nGráfico de Proporção (Barra Comparativa)", sectionFont);
-            chartTitle.setAlignment(Element.ALIGN_CENTER);
-            document.add(chartTitle);
-
-            int totalBlocks = 30;
+            int totalBlocks = 100;
             int internoBlocks = total > 0 ? (int) Math.round((double) internos / total * totalBlocks) : 0;
             int externoBlocks = totalBlocks - internoBlocks;
 
-            StringBuilder bar = new StringBuilder();
-            bar.append("[");
-            for (int i = 0; i < internoBlocks; i++) {
-                bar.append("=");
-            }
-            for (int i = 0; i < externoBlocks; i++) {
-                bar.append("-");
-            }
-            bar.append("]");
+            html = html.replace("$wInterno", internoBlocks + "%");
+            html = html.replace("$wExterno", externoBlocks + "%");
 
-            Paragraph barPara = new Paragraph(bar.toString(), new Font(Font.COURIER, 14, Font.BOLD));
-            barPara.setAlignment(Element.ALIGN_CENTER);
-            barPara.setSpacingBefore(10);
-            document.add(barPara);
-
-            Paragraph legendPara = new Paragraph("Legenda:  (=) Internos  |  (-) Externos", normalFont);
-            legendPara.setAlignment(Element.ALIGN_CENTER);
-            document.add(legendPara);
-
-            document.close();
-
-            byte[] pdfBytes = baos.toByteArray();
-            return new Relatorio(new java.util.Date(), "GRAFICO", pdfBytes, evento);
+            byte[] pdfBytes = pdfGenerator.gerarPDF(html);
+            return new Relatorio(new java.util.Date(), "COMPARATIVO_INTERNOS_EXTERNOS", pdfBytes, evento);
         } catch (Exception e) {
             throw new RuntimeException("Falha ao gerar PDF do relatório comparativo", e);
         }

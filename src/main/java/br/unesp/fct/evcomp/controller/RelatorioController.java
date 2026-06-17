@@ -11,12 +11,14 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/relatorios")
-@CrossOrigin(origins = "*")
+
 public class RelatorioController {
 
     private final RelatorioService relatorioService;
@@ -30,24 +32,59 @@ public class RelatorioController {
         this.eventoRepository = eventoRepository;
     }
 
-    @GetMapping("/gerar")
-    public ResponseEntity<?> gerarRelatorioWeb(@RequestParam String eventoId, @RequestParam String tipo) {
-        selecionarEvento(eventoId);
+    @GetMapping("/eventos")
+    public ResponseEntity<?> listarEventosFinalizados() {
+        List<Evento> eventos = eventoRepository.findAll().stream()
+            .filter(this::isEventoFinalizado)
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(eventos);
+    }
+
+    @GetMapping("/tipos")
+    public ResponseEntity<?> listarTiposRelatorio() {
+        return ResponseEntity.ok(relatorioService.obterTiposRelatoriosDisponiveis());
+    }
+
+    @PostMapping("/emitir")
+    public ResponseEntity<?> emitirRelatorio(@RequestBody Map<String, Object> payload) {
+        String eventoId = String.valueOf(payload.get("eventoId"));
+        String tipo = String.valueOf(payload.get("tipo"));
+
         br.unesp.fct.evcomp.domain.TipoRelatorio tr = br.unesp.fct.evcomp.domain.TipoRelatorio.valueOf(tipo.toUpperCase());
         
         Optional<Evento> ev = eventoRepository.findById(Integer.valueOf(eventoId));
         if (ev.isPresent()) {
-            gerarRelatorio(ev.get(), tr);
-            return ResponseEntity.ok().body(Map.of("message", "Relatorio " + tipo + " gerado"));
+            Evento evento = ev.get();
+            if (!isEventoFinalizado(evento)) {
+                return ResponseEntity.badRequest().body(Map.of("error", "O evento ainda não foi finalizado."));
+            }
+
+            Relatorio rel = relatorioService.gerarRelatorio(evento, tr);
+            relatorioRepository.save(rel);
+            
+            String filename = "Relatorio.pdf";
+            if ("PARTICIPANTES".equals(tr.name())) {
+                filename = "Relatorio Participantes - " + evento.getTitulo() + ".pdf";
+            } else if ("GRAFICO".equals(tr.name())) {
+                filename = "Relatorio Grafico - " + evento.getTitulo() + ".pdf";
+            }
+
+            return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(rel.getPdfConteudo());
         }
         return ResponseEntity.notFound().build();
     }
 
-    public void gerarRelatorio(Object dadosEvento, br.unesp.fct.evcomp.domain.TipoRelatorio tipoRelatorio) {
-        if (dadosEvento instanceof Evento) {
-            Relatorio rel = relatorioService.gerarRelatorio((Evento)dadosEvento, tipoRelatorio);
-            relatorioRepository.save(rel);
+    private boolean isEventoFinalizado(Evento evento) {
+        if (evento.getDataFim() == null) {
+            return false;
+        }
+        if (evento.getDataInicio() != null && evento.getDataInicio().equals(evento.getDataFim())) {
+            return LocalDate.now().isAfter(evento.getDataFim());
+        } else {
+            return !evento.getDataFim().isAfter(LocalDate.now());
         }
     }
-    public void selecionarEvento(String eventoId) {}
 }
