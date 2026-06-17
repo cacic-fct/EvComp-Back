@@ -32,7 +32,7 @@ public class GraficoComparativoStrategy implements RelatorioStrategy {
 
     @Override
     public Object processarDados(Evento dadosEvento) {
-        List<Participante> participantes = inscricaoRepository.findParticipantesByEventoId(dadosEvento.getId());
+        List<Participante> participantes = inscricaoRepository.buscarParticipantesPorEvento(dadosEvento.getId());
         
         long internos = 0;
         long externos = 0;

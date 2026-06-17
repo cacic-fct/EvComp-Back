@@ -28,9 +28,8 @@ public class CadastroController {
             System.err.println("Erro de violação de integridade (e-mail ou RA duplicado): " + e.getMessage());
             return ResponseEntity.status(400).body(Map.of("error", "Erro de integridade. Este e-mail ou RA já pode estar em uso."));
         } catch (Exception e) {
-            System.err.println("Erro desconhecido ao cadastrar usuário:");
-            e.printStackTrace();
-            return ResponseEntity.status(500).body(Map.of("error", "Erro interno no servidor: " + e.getMessage()));
+            System.err.println("Erro desconhecido ao cadastrar usuário: " + e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro interno no servidor. Tente novamente mais tarde."));
         }
     }
 

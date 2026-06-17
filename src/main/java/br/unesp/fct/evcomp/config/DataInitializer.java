@@ -35,8 +35,8 @@ public class DataInitializer implements CommandLineRunner {
             // 1. Criar Evento Base
             Evento evento = new Evento(
                 "SECOMPP 2026 - Semana da Computação",
-                new Date(),
-                new Date(System.currentTimeMillis() + 86400000L * 5), // +5 dias
+                LocalDate.now(),
+                LocalDate.now().plusDays(5),
                 "Maior evento de tecnologia do Oeste Paulista",
                 "https://fct.unesp.br/evcomp",
                 TipoContabilizacao.POR_ATIVIDADE
@@ -46,10 +46,10 @@ public class DataInitializer implements CommandLineRunner {
             // 2. Criar Atividade Base
             Atividade atividade = new Atividade(
                 "Minicurso: Inteligência de Enxames aplicada a Robótica",
-                new Date(),
-                new Date(),
-                new Date(System.currentTimeMillis() + 86400000L * 5),
-                new Date(),
+                LocalDate.now(),
+                LocalTime.now(),
+                LocalDate.now().plusDays(5),
+                LocalTime.now().plusHours(2),
                 50,
                 4,
                 4

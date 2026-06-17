@@ -8,12 +8,13 @@ import java.util.List;
 @DiscriminatorValue("COL")
 public class ColetorDePresenca extends Participante {
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "coletor_presença",
         joinColumns = @JoinColumn(name = "idUsuário"),
         inverseJoinColumns = @JoinColumn(name = "idEvento")
     )
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "atividades"})
     private List<Evento> eventosColetados = new ArrayList<>();
 
     public ColetorDePresenca() {

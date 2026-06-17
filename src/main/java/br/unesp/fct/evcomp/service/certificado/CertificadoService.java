@@ -5,9 +5,13 @@ import br.unesp.fct.evcomp.domain.Certificado;
 import br.unesp.fct.evcomp.domain.Evento;
 import br.unesp.fct.evcomp.domain.Participante;
 import br.unesp.fct.evcomp.domain.TipoContabilizacao;
+import br.unesp.fct.evcomp.repository.AtividadeRepository;
 import br.unesp.fct.evcomp.repository.PresencaRepository;
+import br.unesp.fct.evcomp.repository.InscricaoRepository;
+import br.unesp.fct.evcomp.domain.Inscrição;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -16,11 +20,15 @@ public class CertificadoService {
 
     private final CertificadoBuilderFactory builderFactory;
     private final PresencaRepository presencaRepository;
+    private final AtividadeRepository atividadeRepository;
+    private final InscricaoRepository inscricaoRepository;
 
     @Autowired
-    public CertificadoService(CertificadoBuilderFactory builderFactory, PresencaRepository presencaRepository) {
+    public CertificadoService(CertificadoBuilderFactory builderFactory, PresencaRepository presencaRepository, AtividadeRepository atividadeRepository, InscricaoRepository inscricaoRepository) {
         this.builderFactory = builderFactory;
         this.presencaRepository = presencaRepository;
+        this.atividadeRepository = atividadeRepository;
+        this.inscricaoRepository = inscricaoRepository;
     }
 
     public boolean verificarPresencaPorEvento(String participanteId, String eventoId) {
@@ -39,8 +47,19 @@ public class CertificadoService {
         return null;
     }
 
-    public Certificado emitirCertificado(Participante participante, Evento evento, Atividade atividade) {
+    @Transactional
+    public byte[] emitirCertificado(Participante participante, Evento evento, Atividade atividade) {
         if (atividade != null) {
+            boolean isMinistrante = atividade.getMinistrantes().stream().anyMatch(m -> m.getId().equals(participante.getId()));
+            if (isMinistrante) {
+                CertificadoBuilder builder = builderFactory.obterBuilder("ATIVIDADE");
+                builder.buildMetaDados(participante, evento, atividade, "ATIVIDADE");
+                builder.buildConteudo(atividade.getCargaHorariaMinistrante(), "ministrante", null);
+                builder.buildPdfDocument();
+                Certificado cert = builder.obterCertificado();
+                return builder.getPdfBytes();
+            }
+
             // Emissão por atividade individual
             boolean presente = presencaRepository.buscarPresencaPorAtividade(atividade.getId(), participante.getId())
                 .map(p -> p.isPresente())
@@ -52,14 +71,19 @@ public class CertificadoService {
 
             CertificadoBuilder builder = builderFactory.obterBuilder("ATIVIDADE");
             builder.buildMetaDados(participante, evento, atividade, "ATIVIDADE");
-            builder.buildConteudo(atividade.getCargaHorariaTotal(), "PARTICIPANTE", null);
+            builder.buildConteudo(atividade.getCargaHorariaTotal(), "participante", null);
             builder.buildPdfDocument();
-            return builder.obterCertificado();
+            Certificado cert = builder.obterCertificado();
+            // Salvar no repositório se necessário
+            return builder.getPdfBytes();
         } else {
             // Emissão geral do evento
-            List<Atividade> atividades = new java.util.ArrayList<>();
+            Inscrição inscricao = inscricaoRepository.buscarPorParticipanteEEvento(participante.getId(), evento.getId())
+                    .orElseThrow(() -> new IllegalStateException("Participante não está inscrito neste evento."));
+
+            List<Atividade> atividades = inscricao.getAtividade();
             if (atividades.isEmpty()) {
-                throw new IllegalStateException("Evento não possui atividades cadastradas.");
+                throw new IllegalStateException("Participante não está inscrito em nenhuma atividade deste evento.");
             }
 
             long totalAtividades = atividades.size();
@@ -105,9 +129,11 @@ public class CertificadoService {
 
             CertificadoBuilder builder = builderFactory.obterBuilder("GERAL");
             builder.buildMetaDados(participante, evento, null, "GERAL");
-            builder.buildConteudo(cargaHorariaFinal, "PARTICIPANTE", null);
+            builder.buildConteudo(cargaHorariaFinal, "participante", null);
             builder.buildPdfDocument();
-            return builder.obterCertificado();
+            Certificado cert = builder.obterCertificado();
+            // Salvar no repositório se necessário
+            return builder.getPdfBytes();
         }
     }
 }

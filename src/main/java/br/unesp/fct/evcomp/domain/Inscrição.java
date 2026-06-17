@@ -1,8 +1,8 @@
+
 package br.unesp.fct.evcomp.domain;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,19 +18,22 @@ public class Inscrição {
     private Integer id;
 
     @Column(name = "data_inscricao", nullable = false)
-    private Date dataInscricao;
+    private LocalDateTime dataInscricao;
 
     @Column(nullable = false)
     private boolean status;
 
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "idUsuário", nullable = false)
     private Participante participante;
 
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "idEvento", nullable = false)
     private Evento evento;
 
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "inscrição_atividade",
@@ -42,7 +45,7 @@ public class Inscrição {
     public Inscrição() {
     }
 
-    public Inscrição(Date dataInscricao, boolean status, Participante participante, Evento evento, List<Atividade> atividade) {
+    public Inscrição(LocalDateTime dataInscricao, boolean status, Participante participante, Evento evento, List<Atividade> atividade) {
         this.dataInscricao = dataInscricao;
         this.status = status;
         this.participante = participante;
@@ -58,11 +61,11 @@ public class Inscrição {
         this.id = id;
     }
 
-    public Date getDataInscricao() {
+    public LocalDateTime getDataInscricao() {
         return dataInscricao;
     }
 
-    public void setDataInscricao(Date dataInscricao) {
+    public void setDataInscricao(LocalDateTime dataInscricao) {
         this.dataInscricao = dataInscricao;
     }
 

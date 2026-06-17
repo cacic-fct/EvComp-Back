@@ -8,16 +8,26 @@ public interface ParticipanteRepository extends JpaRepository<Participante, Inte
     @org.springframework.data.jpa.repository.Query("SELECT p FROM Participante p WHERE p.email = :email")
     Optional<Participante> buscarPartcipantePorEmail(@org.springframework.data.repository.query.Param("email") String email);
 
-    default Participante buscarParticipantePorId(String participanteId) {
-        return null;
-    }
+    @org.springframework.data.jpa.repository.Query("SELECT p FROM Participante p WHERE p.RA = :ra")
+    Optional<Participante> buscarPorRa(@org.springframework.data.repository.query.Param("ra") String ra);
+
+    @org.springframework.data.jpa.repository.Query("SELECT p FROM Participante p WHERE p.id = :id")
+    Optional<Participante> buscarParticipantePorId(@org.springframework.data.repository.query.Param("id") Integer id);
 
     default boolean salvarNovasInformacoesParticipante(String participanteId, String nome, String ra) {
+        Optional<Participante> p = buscarParticipantePorId(Integer.valueOf(participanteId));
+        if (p.isPresent()) {
+            Participante part = p.get();
+            part.setNome(nome);
+            part.setRA(ra);
+            save(part);
+            return true;
+        }
         return false;
     }
 
-    default Object pegarDadosParticipante(String participanteId) {
-        return null;
+    default Participante pegarDadosParticipante(String participanteId) {
+        return buscarParticipantePorId(Integer.valueOf(participanteId)).orElse(null);
     }
 
     default boolean verificarEmailCadastrado(String email) {
@@ -36,4 +46,17 @@ public interface ParticipanteRepository extends JpaRepository<Participante, Inte
     @org.springframework.transaction.annotation.Transactional
     @org.springframework.data.jpa.repository.Query(value = "INSERT IGNORE INTO coletor_presença (idUsuário, idEvento) VALUES (:idUsuario, :idEvento)", nativeQuery = true)
     void associarColetorAoEventoNoBanco(@org.springframework.data.repository.query.Param("idUsuario") Integer idUsuario, @org.springframework.data.repository.query.Param("idEvento") Integer idEvento);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @org.springframework.data.jpa.repository.Query(value = "DELETE FROM coletor_presença WHERE idUsuário = :idUsuario AND idEvento = :idEvento", nativeQuery = true)
+    void removerColetorDoEventoNoBanco(@org.springframework.data.repository.query.Param("idUsuario") Integer idUsuario, @org.springframework.data.repository.query.Param("idEvento") Integer idEvento);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @org.springframework.data.jpa.repository.Query(value = "UPDATE usuário SET tipo_usuario = 'PAR' WHERE idUsuário = :id", nativeQuery = true)
+    void rebaixarParaParticipante(@org.springframework.data.repository.query.Param("id") Integer id);
+
+    @org.springframework.data.jpa.repository.Query(value = "SELECT COUNT(*) FROM coletor_presença WHERE idUsuário = :idUsuario", nativeQuery = true)
+    int contarEventosDoColetor(@org.springframework.data.repository.query.Param("idUsuario") Integer idUsuario);
 }

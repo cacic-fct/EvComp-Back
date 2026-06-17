@@ -14,11 +14,31 @@ public interface InscricaoRepository extends JpaRepository<Inscrição, Integer>
     Optional<Inscrição> buscarPorParticipanteEEvento(@org.springframework.data.repository.query.Param("participanteId") Integer participanteId, @org.springframework.data.repository.query.Param("eventoId") Integer eventoId);
     
     @org.springframework.data.jpa.repository.Query("SELECT i.participante FROM Inscrição i WHERE i.evento.id = :eventoId AND i.status = true")
-    List<Participante> findParticipantesByEventoId(@Param("eventoId") Integer eventoId);
+    List<Participante> buscarParticipantesPorEvento(@Param("eventoId") Integer eventoId);
 
-    default boolean buscarPorParticipanteEEvento(String participanteId, String eventoId) { return false; }
-    default int contarInscritosPorAtividade(String atividadeId) { return 0; }
-    default void salvarInscricao(String participanteId, String eventoId, Atividade atividades) { }
-    default Participante buscarParticipantesPorEvento(Participante participantes) { return null; }
+    @org.springframework.data.jpa.repository.Query("SELECT i.evento.id FROM Inscrição i WHERE i.participante.id = :participanteId AND i.status = true")
+    List<Integer> buscarEventosInscritosPorParticipante(@Param("participanteId") Integer participanteId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT i FROM Inscrição i LEFT JOIN FETCH i.atividade JOIN FETCH i.evento WHERE i.participante.id = :participanteId AND i.status = true")
+    List<Inscrição> buscarInscricoesAtivasPorParticipante(@Param("participanteId") Integer participanteId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT i FROM Inscrição i JOIN i.atividade a WHERE a.id = :atividadeId AND i.status = true")
+    List<Inscrição> buscarInscricoesPorAtividade(@Param("atividadeId") Integer atividadeId);
+
+    default Inscrição buscarPorParticipanteEEvento(String participanteId, String eventoId) {
+        return buscarPorParticipanteEEvento(Integer.valueOf(participanteId), Integer.valueOf(eventoId)).orElse(null);
+    }
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(i) FROM Inscrição i JOIN i.atividade a WHERE a.id = :atividadeId")
+    int contarInscritosPorAtividadeInt(@org.springframework.data.repository.query.Param("atividadeId") Integer atividadeId);
+
+    default int contarInscritosPorAtividade(String atividadeId) { 
+        return contarInscritosPorAtividadeInt(Integer.valueOf(atividadeId));
+    }
+
+    default void salvarInscricao(Inscrição inscricao) {
+        this.save(inscricao);
+    }
+    
     default boolean buscarPorParticipanteEAtividade(String participanteId, String atividadeId) { return false; }
 }

@@ -30,7 +30,7 @@ public class RelatorioParticipantesStrategy implements RelatorioStrategy {
 
     @Override
     public Object processarDados(Evento dadosEvento) {
-        return inscricaoRepository.findParticipantesByEventoId(dadosEvento.getId());
+        return inscricaoRepository.buscarParticipantesPorEvento(dadosEvento.getId());
     }
 
     @Override

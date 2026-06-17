@@ -19,10 +19,10 @@ public class Evento {
     private String titulo;
 
     @Column(name = "data_inicio", nullable = false)
-    private Date dataInicio;
+    private LocalDate dataInicio;
 
     @Column(name = "data_termino", nullable = false)
-    private Date dataFim;
+    private LocalDate dataFim;
 
     @Column(name = "descricao", nullable = false, columnDefinition = "TEXT")
     private String descricao;
@@ -45,7 +45,7 @@ public class Evento {
     public Evento() {
     }
 
-    public Evento(String titulo, Date dataInicio, Date dataFim, String descricao, String link, TipoContabilizacao tipoContabilizacao) {
+    public Evento(String titulo, LocalDate dataInicio, LocalDate dataFim, String descricao, String link, TipoContabilizacao tipoContabilizacao) {
         this.titulo = titulo;
         this.dataInicio = dataInicio;
         this.dataFim = dataFim;
@@ -58,7 +58,7 @@ public class Evento {
         return null;
     }
 
-    public Evento criarEvento(String titulo, Date dataInicio, Date dataTermino, String descricao, String link) {
+    public Evento criarEvento(String titulo, LocalDate dataInicio, LocalDate dataTermino, String descricao, String link) {
         return new Evento(titulo, dataInicio, dataTermino, descricao, link, null);
     }
 
@@ -82,19 +82,19 @@ public class Evento {
     }
 
     public LocalDate getDataInicio() {
-        return dataInicio == null ? null : dataInicio.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+        return dataInicio;
     }
 
     public void setDataInicio(LocalDate dataInicio) {
-        this.dataInicio = dataInicio == null ? null : Date.from(dataInicio.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+        this.dataInicio = dataInicio;
     }
 
     public LocalDate getDataFim() {
-        return dataFim == null ? null : dataFim.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+        return dataFim;
     }
 
     public void setDataFim(LocalDate dataFim) {
-        this.dataFim = dataFim == null ? null : Date.from(dataFim.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+        this.dataFim = dataFim;
     }
 
     public String getDescricao() {

@@ -99,4 +99,14 @@ public abstract class Usuário {
     public void setTokenRedefinicao(String tokenRedefinicao) {
         this.tokenRedefinicao = tokenRedefinicao;
     }
+
+    @Transient
+    public String getRole() {
+        if (this instanceof br.unesp.fct.evcomp.domain.ColetorDePresenca) {
+            return "COLETOR";
+        } else if (this instanceof br.unesp.fct.evcomp.domain.Administrador) {
+            return "ADMIN";
+        }
+        return "PARTICIPANTE";
+    }
 }
