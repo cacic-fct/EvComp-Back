@@ -35,27 +35,6 @@ public interface InscricaoRepository extends JpaRepository<Inscrição, Integer>
     default void salvarInscricao(Inscrição inscricao) {
         this.save(inscricao);
     }
-    
-    default br.unesp.fct.evcomp.domain.Inscrição inscreverParticipante(Integer participanteId, Integer eventoId, java.util.List<Atividade> atividades, Participante p, br.unesp.fct.evcomp.domain.Evento e) {
-        Inscrição inscricaoExistente = buscarPorParticipanteEEvento(participanteId, eventoId);
-        Inscrição inscricao;
-        if (inscricaoExistente != null) {
-            inscricao = inscricaoExistente;
-            inscricao.setStatus(true);
-            inscricao.setDataInscricao(java.time.LocalDateTime.now());
-            inscricao.setAtividade(atividades);
-        } else {
-            inscricao = new Inscrição(
-                java.time.LocalDateTime.now(),
-                true,
-                p,
-                e,
-                atividades
-            );
-        }
-        salvarInscricao(inscricao);
-        return inscricao;
-    }
 
     default boolean buscarPorParticipanteEAtividade(String participanteId, String atividadeId) { return false; }
 }

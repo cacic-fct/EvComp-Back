@@ -25,8 +25,17 @@ public interface AtividadeRepository extends JpaRepository<Atividade, Integer> {
     default void removerAtividade(String atividadeId) { }
     default Atividade buscarAtividadesPorEvento(String eventoId) { return null; }
     default Atividade buscarAtividadesPorParticipante(String participanteId) { return null; }
+    
+    @org.springframework.data.jpa.repository.Query("SELECT a FROM Atividade a JOIN a.ministrantes m WHERE m.id = :ministranteId")
+    List<Atividade> buscarAtividadesPorMinistrante(@org.springframework.data.repository.query.Param("ministranteId") Integer ministranteId);
     default boolean checarAndamentoAtividade(String atividadeId) { return false; }
-    default int buscarCargaHorariaAtividade(String atividadeId) { return 0; }
+    default int buscarCargaHorariaAtividade(Integer atividadeId) { 
+        return findById(atividadeId).map(Atividade::getCargaHorariaTotal).orElse(0); 
+    }
+    
+    default br.unesp.fct.evcomp.domain.TipoContabilizacao buscarTipoEventoPorAtividade(Integer atividadeId) {
+        return findById(atividadeId).map(a -> a.getEvento().getTipoContabilizacao()).orElse(null);
+    }
     default Atividade salvarAtividade(Atividade atividade) { return null; }
     default Atividade buscarAtividadePorTitulo(String tituloAtividade) { return null; }
 }

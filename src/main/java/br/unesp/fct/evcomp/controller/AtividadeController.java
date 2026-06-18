@@ -69,7 +69,7 @@ public class AtividadeController {
 
     @PostMapping("/evento/{eventoId}")
     public ResponseEntity<?> confirmarCriacao(@PathVariable Integer eventoId, @RequestBody Map<String, Object> req) {
-        Optional<Evento> evOpt = eventoRepository.buscarEventoPorIdInt(eventoId);
+        Optional<Evento> evOpt = eventoRepository.buscarEventoPorId(eventoId);
         if (!evOpt.isPresent()) return ResponseEntity.status(404).body(Map.of("error", "Evento não encontrado."));
         Evento evento = evOpt.get();
 
@@ -305,5 +305,26 @@ public class AtividadeController {
 
         return ResponseEntity.ok(Map.of("vagasDisponiveis", Math.max(0, vagasDisponiveis)));
     }
+    @PostMapping("/verificar-conflitos")
+    public ResponseEntity<?> verificarConflitosWeb(@RequestBody Map<String, Object> req) {
+        List<Integer> atividades = (List<Integer>) req.get("atividades");
+        Integer atividadeId = Integer.valueOf(String.valueOf(req.get("atividadeId")));
+        return verificarConflitos(atividades, atividadeId);
+    }
 
+    public ResponseEntity<?> verificarConflitos(List<Integer> atividadesIds, Integer atividadeId) {
+        Optional<Atividade> atvOpt = atividadeRepository.findById(atividadeId);
+        if (!atvOpt.isPresent()) return ResponseEntity.badRequest().body(Map.of("error", "Atividade principal não encontrada."));
+        
+        Atividade atvPrincipal = atvOpt.get();
+        for (Integer id : atividadesIds) {
+            Optional<Atividade> outraOpt = atividadeRepository.findById(id);
+            if (outraOpt.isPresent() && !id.equals(atividadeId)) {
+                if (atvPrincipal.verificarConflitoHorarios(outraOpt.get())) {
+                    return ResponseEntity.ok(Map.of("conflitoDetectado", true, "mensagem", "Conflito de horários com a atividade: " + outraOpt.get().getTitulo()));
+                }
+            }
+        }
+        return ResponseEntity.ok(Map.of("conflitoDetectado", false));
+    }
 }

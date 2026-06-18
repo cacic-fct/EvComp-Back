@@ -39,9 +39,10 @@ public class InscricaoController {
     @PostMapping
     public ResponseEntity<?> inscreverParticipanteWeb(@RequestBody Map<String, Object> req) {
         try {
-            String participanteId = String.valueOf(req.get("participanteId"));
-            String eventoId = String.valueOf(req.get("eventoId"));
+            Integer participanteId = Integer.valueOf(String.valueOf(req.get("participanteId")));
+            Integer eventoId = Integer.valueOf(String.valueOf(req.get("eventoId")));
             List<Integer> atividades = (List<Integer>) req.get("atividadeIds");
+
             return inscreverParticipante(participanteId, eventoId, atividades);
         } catch (Exception e) {
             System.err.println("Erro processar inscricao: " + e.getMessage());
@@ -49,84 +50,51 @@ public class InscricaoController {
         }
     }
 
-    @Autowired
-    private br.unesp.fct.evcomp.controller.AtividadeController atividadeController;
-
     public ResponseEntity<?> inscreverParticipante(Integer participanteId, Integer eventoId, List<Integer> atividades) {
         if (participanteId == null || eventoId == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Participante e Evento são obrigatórios."));
         }
 
-        // Por segurança extra não contida no diagrama de confirmar inscrição, checamos se Part. e Ev. existem.
-        Inscricao inscricao = inscricaoRepository.buscarPorParticipanteEEvento(participanteId, eventoId);
-
         Optional<Participante> participante = participanteRepository.buscarParticipantePorId(participanteId);
         Optional<Evento> evento = eventoRepository.buscarEventoPorId(eventoId);
 
-        if (!inscricao) {
+        if (!participante.isPresent() || !evento.isPresent()) {
             return ResponseEntity.status(404).body(Map.of("error", "Participante ou Evento não encontrado."));
         }
 
-        // O que fazer aqui?
-        if (atividades == null || atividades.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Selecione pelo menos uma atividade para concluir a inscrição no evento."));
+        // Resgata as atividades do evento e filtra apenas as selecionadas
+        List<Atividade> todasAtividades = atividadeRepository.buscarAtividadesPorEvento(eventoId);
+        List<Atividade> atividadesObjetos = todasAtividades.stream()
+            .filter(a -> atividades.contains(a.getId()))
+            .toList();
+
+        if (atividadesObjetos.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Nenhuma atividade válida selecionada."));
+        }
+
+        // Busca a Inscrição Atual
+        Optional<br.unesp.fct.evcomp.domain.Inscrição> inscricaoExistente = inscricaoRepository.buscarPorParticipanteEEvento(participanteId, eventoId);
+
+        br.unesp.fct.evcomp.domain.Inscrição inscricao;
+        if (inscricaoExistente.isPresent()) {
+            inscricao = inscricaoExistente.get();
+            if (inscricao.isStatus()) { // Já inscrito e ativo
+                return ResponseEntity.badRequest().body(Map.of("error", "Participante já inscrito neste evento."));
+            }
+            // Reativa a inscrição cancelada
+            inscricao.setStatus(true);
+            inscricao.setAtividade(atividadesObjetos);
+            inscricao.setDataInscricao(LocalDateTime.now());
+        } else {
+            // Nova Inscrição
+            inscricao = new br.unesp.fct.evcomp.domain.Inscrição(
+                LocalDateTime.now(), true, participante.get(), evento.get(), atividadesObjetos
+            );
         }
 
         inscricaoRepository.salvarInscricao(inscricao);
 
-        // List<Atividade> atividadesObjetos = new ArrayList<>();
-        
-        // // --- Delegação para AtividadeController (Diagrama 3) ---
-        // for (Integer atvId : atividades) {
-        //     Optional<Atividade> aOpt = atividadeRepository.findById(atvId);
-        //     if (aOpt.isPresent()) {
-        //         Atividade a = aOpt.get();
-
-        //         // 2: verificarVagas(atividadeId)
-        //         ResponseEntity<?> responseVagas = atividadeController.verificarVagas(String.valueOf(atvId));
-        //         Map<String, Object> bodyVagas = (Map<String, Object>) responseVagas.getBody();
-        //         if ((Integer) bodyVagas.get("vagasDisponiveis") <= 0) {
-        //             return ResponseEntity.badRequest().body(Map.of("error", "A atividade '" + a.getTitulo() + "' não possui vagas disponíveis."));
-        //         }
-                
-        //         // Validação de Cronologia mantida para segurança
-        //         if (a.getDataInicio() != null && a.getHorarioInicio() != null) {
-        //             LocalDateTime inicioAtividade = a.getDataInicio().atTime(a.getHorarioInicio());
-        //             if (LocalDateTime.now().isAfter(inicioAtividade)) {
-        //                 return ResponseEntity.badRequest().body(Map.of("error", "A atividade '" + a.getTitulo() + "' já foi iniciada ou encerrada."));
-        //             }
-        //         }
-        //         atividadesObjetos.add(a);
-        //     }
-        // }
-        
-        // // 3: verificarConflitos(atividades, atividadeId)
-        // for (Integer atvId : atividades) {
-        //     ResponseEntity<?> responseConflitos = atividadeController.verificarConflitos(atividades, atvId);
-        //     Map<String, Object> bodyConflitos = (Map<String, Object>) responseConflitos.getBody();
-        //     if ((Boolean) bodyConflitos.get("conflitoDetectado")) {
-        //         return ResponseEntity.badRequest().body(Map.of("error", bodyConflitos.get("mensagem")));
-        //     }
-        // }
-
-        // // --- Delegação para InscricaoRepository (Diagrama 4) ---
-        // // 1: confirmarInscricao(participanteId, eventoId, atividades) -> 2: inscreverParticipante
-        // // Checamos a dupla inscrição:
-        // br.unesp.fct.evcomp.domain.Inscrição inscricaoExistente = inscricaoRepository.buscarPorParticipanteEEvento(participanteId, eventoId);
-        // if (inscricaoExistente != null && inscricaoExistente.isStatus()) {
-        //     return ResponseEntity.badRequest().body(Map.of("error", "Participante já inscrito neste evento."));
-        // }
-
-        // // Salvar a Inscrição delegando ao Repositório
-        // br.unesp.fct.evcomp.domain.Inscrição inscricaoEfetuada = inscricaoRepository.inscreverParticipante(
-        //     participanteId, 
-        //     eventoId, 
-        //     atividadesObjetos, 
-        //     pOpt.get(), 
-        //     eOpt.get()
-        // );
-
-        // return ResponseEntity.ok(inscricaoEfetuada);
+        return ResponseEntity.ok(inscricao);
     }
 
     @GetMapping("/minhas")
