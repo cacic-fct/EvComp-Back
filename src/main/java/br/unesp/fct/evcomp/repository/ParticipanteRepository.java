@@ -14,8 +14,9 @@ public interface ParticipanteRepository extends JpaRepository<Participante, Inte
     @org.springframework.data.jpa.repository.Query("SELECT p FROM Participante p WHERE p.id = :id")
     Optional<Participante> buscarParticipantePorId(@org.springframework.data.repository.query.Param("id") Integer id);
 
-    default boolean salvarNovasInformacoesParticipante(String participanteId, String nome, String ra) {
-        Optional<Participante> p = buscarParticipantePorId(Integer.valueOf(participanteId));
+    default boolean salvarNovasInformacoesParticipante(Integer participanteId, String nome, String ra) {
+        Optional<Participante> p = buscarParticipantePorId(participanteId);
+
         if (p.isPresent()) {
             Participante part = p.get();
             part.setNome(nome);
@@ -26,8 +27,8 @@ public interface ParticipanteRepository extends JpaRepository<Participante, Inte
         return false;
     }
 
-    default Participante pegarDadosParticipante(String participanteId) {
-        return buscarParticipantePorId(Integer.valueOf(participanteId)).orElse(null);
+    default Participante pegarDadosParticipante(Integer participanteId) {
+        return buscarParticipantePorId(participanteId).orElse(null);
     }
 
     default boolean verificarEmailCadastrado(String email) {

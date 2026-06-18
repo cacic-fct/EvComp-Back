@@ -45,4 +45,8 @@ public interface EventoRepository extends JpaRepository<Evento, Integer> {
     default TipoContabilizacao buscarTipoEvento(Integer eventoId) {
         return findById(eventoId).map(Evento::getTipoContabilizacao).orElse(null);
     }
+
+    default java.util.List<Evento> buscarTodosEventos() {
+        return this.findAll();
+    }
 }

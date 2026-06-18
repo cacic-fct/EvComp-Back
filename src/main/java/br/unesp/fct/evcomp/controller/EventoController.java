@@ -40,8 +40,8 @@ public class EventoController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Evento>> listarEventos() {
-        return ResponseEntity.ok(eventoRepository.findAll());
+    public ResponseEntity<List<Evento>> solicitarEventos() {
+        return ResponseEntity.ok(eventoRepository.buscarTodosEventos());
     }
 
     @GetMapping("/disponiveis")
@@ -56,8 +56,8 @@ public class EventoController {
 
     @GetMapping("/{id}/participantes")
     public ResponseEntity<List<Participante>> listarParticipantesDoEvento(@PathVariable Integer id) {
-        // Conforme Diagrama de Colaboração: buscarParticipantesPorEvento
         List<Participante> participantes = inscricaoRepository.buscarParticipantesPorEvento(id);
+
         return ResponseEntity.ok(participantes);
     }
 
@@ -183,7 +183,7 @@ public class EventoController {
         ));
     }
 
-    public void solicitarEventos() {}
+
     public void buscarParticipantesPorEvento(String eventoId) {}
     public void buscarColetoresPorEvento(String eventoId) {}
     public void solicitarDadosCertificados(String participanteId) {}
