@@ -27,9 +27,7 @@ public interface ParticipanteRepository extends JpaRepository<Participante, Inte
         return false;
     }
 
-    default Participante pegarDadosParticipante(Integer participanteId) {
-        return buscarParticipantePorId(participanteId).orElse(null);
-    }
+
 
     default boolean verificarEmailCadastrado(String email) {
         return false;

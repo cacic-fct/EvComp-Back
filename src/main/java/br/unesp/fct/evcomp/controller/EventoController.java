@@ -186,7 +186,7 @@ public class EventoController {
 
     public void buscarParticipantesPorEvento(String eventoId) {}
     public void buscarColetoresPorEvento(String eventoId) {}
-    public void solicitarDadosCertificados(String participanteId) {}
+
     @PostMapping
     public ResponseEntity<?> criarEventoWeb(@RequestBody Map<String, String> req) {
         try {

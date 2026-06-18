@@ -46,12 +46,14 @@ public class CertificadoService {
         TipoContabilizacao tipo = null;
         int cargaHoraria = 0;
 
-        // 2.2.1 e 2.2.3: buscar evento
+
         if (eventoId != null) {
             evento = eventoRepository.buscarEventoPorId(eventoId).orElse(null);
+
             if (evento != null) tipo = eventoRepository.buscarTipoEvento(eventoId);
         } else if (atividadeId != null) {
-            atividade = atividadeRepository.findById(atividadeId).orElse(null);
+            atividade = atividadeRepository.buscarAtividadePorId(atividadeId).orElse(null);
+            
             if (atividade != null) {
                 evento = atividade.getEvento();
                 tipo = atividadeRepository.buscarTipoEventoPorAtividade(atividadeId);
@@ -60,77 +62,64 @@ public class CertificadoService {
 
         if (evento == null) {
             dadosEmissao.put("error", "Evento ou atividade não encontrado(a).");
+
             return dadosEmissao;
         }
 
         dadosEmissao.put("evento", evento);
+
         if (atividade != null) dadosEmissao.put("atividade", atividade);
 
-        // Validações de andamento e presença
-        if (atividadeId != null) {
-            if (atividadeRepository.checarAndamentoAtividade(String.valueOf(atividadeId)) || eventoRepository.checarAndamentoEvento(evento.getId())) {
-                dadosEmissao.put("error", "A atividade (ou evento) ainda não foi finalizada.");
-                return dadosEmissao;
-            }
-            boolean isMinistrante = atividade.getMinistrantes().stream().anyMatch(m -> m.getId().equals(participante.getId()));
-            if (!isMinistrante && !verificarPresencaPorAtividade(String.valueOf(participante.getId()), String.valueOf(atividadeId))) {
-                dadosEmissao.put("error", "Você não possui presença registrada nesta atividade.");
-                return dadosEmissao;
-            }
-        } else {
-            if (eventoRepository.checarAndamentoEvento(evento.getId())) {
-                dadosEmissao.put("error", "O evento ainda não foi finalizado.");
-                return dadosEmissao;
-            }
-            if (!verificarPresencaPorEvento(String.valueOf(participante.getId()), String.valueOf(evento.getId()))) {
-                dadosEmissao.put("error", "Presença mínima não atingida neste evento.");
-                return dadosEmissao;
-            }
-        }
 
-        // 2.2.4 e 2.2.5: Carga horária baseada no tipo
         if (tipo != null && tipo.name().equals("POR_CARGA_TOTAL")) {
             cargaHoraria = calculadoraCargaHoraria.calcularCargaHorariaTotal(evento);
+
         } else if (tipo != null && tipo.name().equals("POR_ATIVIDADE") && atividadeId != null) {
             cargaHoraria = atividadeRepository.buscarCargaHorariaAtividade(atividadeId);
         }
 
         dadosEmissao.put("cargaHoraria", cargaHoraria);
+
         return dadosEmissao;
     }
 
-    public boolean verificarPresencaPorEvento(String participanteId, String eventoId) {
-        Integer eId = Integer.parseInt(eventoId);
-        List<Atividade> atividades = atividadeRepository.buscarAtividadesPorEvento(eId);
+    public boolean verificarPresencaPorEvento(Integer participanteId, Integer eventoId) {
+        List<Atividade> atividades = atividadeRepository.buscarAtividadesPorEvento(eventoId);
+
         int totalAtividades = atividades.size();
+
         if (totalAtividades == 0) return true;
 
         int presencas = 0;
+
         for (Atividade a : atividades) {
-            if (verificarPresencaPorAtividade(participanteId, String.valueOf(a.getId()))) {
+            if (verificarPresencaPorAtividade(a.getId(), participanteId)) {
                 presencas++;
             }
         }
         double ratio = (double) presencas / totalAtividades;
+
         return ratio >= 0.5;
     }
 
-    public boolean verificarPresencaPorAtividade(String participanteId, String atividadeId) {
-        Integer aId = Integer.parseInt(atividadeId);
-        Integer pId = Integer.parseInt(participanteId);
-        return presencaRepository.buscarPresencaPorAtividade(aId, pId).filter(br.unesp.fct.evcomp.domain.RegistroDePresenca::isPresente).isPresent();
+    public boolean verificarPresencaPorAtividade(Integer atividadeId, Integer participanteId) {
+        return presencaRepository.buscarPresencaPorAtividade(atividadeId, participanteId).filter(br.unesp.fct.evcomp.domain.RegistroDePresenca::isPresente).isPresent();
     }
 
     @Transactional
     public byte[] gerarCertificado(Participante participante, Evento evento, Atividade atividade) {
         if (atividade != null) {
             boolean isMinistrante = atividade.getMinistrantes().stream().anyMatch(m -> m.getId().equals(participante.getId()));
+          
             if (isMinistrante) {
                 CertificadoBuilder builder = builderFactory.obterBuilder("ATIVIDADE");
+
                 builder.buildMetaDados(participante, evento, atividade, "ATIVIDADE");
                 builder.buildConteudo(atividade.getCargaHorariaMinistrante(), "ministrante", null);
                 builder.gerarPDF(pdfGenerator);
+                
                 Certificado cert = builder.obterCertificado();
+                
                 return builder.getPdfBytes();
             }
 
@@ -144,10 +133,13 @@ public class CertificadoService {
             }
 
             CertificadoBuilder builder = builderFactory.obterBuilder("ATIVIDADE");
+           
             builder.buildMetaDados(participante, evento, atividade, "ATIVIDADE");
             builder.buildConteudo(atividade.getCargaHorariaTotal(), "participante", null);
             builder.gerarPDF(pdfGenerator);
+           
             Certificado cert = builder.obterCertificado();
+           
             // Salvar no repositório se necessário
             return builder.getPdfBytes();
         } else {
@@ -179,6 +171,7 @@ public class CertificadoService {
             }
 
             int cargaHorariaFinal = 0;
+
             if (evento.getTipoContabilizacao() == TipoContabilizacao.POR_CARGA_TOTAL) {
                 double ratio = (double) presentesCount / totalAtividades;
                 if (ratio == 1.0) {
@@ -202,10 +195,13 @@ public class CertificadoService {
             }
 
             CertificadoBuilder builder = builderFactory.obterBuilder("GERAL");
+
             builder.buildMetaDados(participante, evento, null, "GERAL");
             builder.buildConteudo(cargaHorariaFinal, "participante", null);
             builder.gerarPDF(pdfGenerator);
+
             Certificado cert = builder.obterCertificado();
+
             // Salvar no repositório se necessário
             return builder.getPdfBytes();
         }
