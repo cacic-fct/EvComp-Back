@@ -72,7 +72,11 @@ public class CertificadoService {
 
 
         if (tipo != null && tipo.name().equals("POR_CARGA_TOTAL")) {
-            cargaHoraria = calculadoraCargaHoraria.calcularCargaHorariaTotal(evento);
+            br.unesp.fct.evcomp.domain.Inscrição inscricao = inscricaoRepository.buscarPorParticipanteEEvento(participante.getId(), evento.getId()).orElse(null);
+
+            if (inscricao != null) {
+                cargaHoraria = calculadoraCargaHoraria.calcularCargaHorariaTotal(inscricao.getAtividade());
+            }
 
         } else if (tipo != null && tipo.name().equals("POR_ATIVIDADE") && atividadeId != null) {
             cargaHoraria = atividadeRepository.buscarCargaHorariaAtividade(atividadeId);
@@ -83,24 +87,6 @@ public class CertificadoService {
         return dadosEmissao;
     }
 
-    public boolean verificarPresencaPorEvento(Integer participanteId, Integer eventoId) {
-        List<Atividade> atividades = atividadeRepository.buscarAtividadesPorEvento(eventoId);
-
-        int totalAtividades = atividades.size();
-
-        if (totalAtividades == 0) return true;
-
-        int presencas = 0;
-
-        for (Atividade a : atividades) {
-            if (verificarPresencaPorAtividade(a.getId(), participanteId)) {
-                presencas++;
-            }
-        }
-        double ratio = (double) presencas / totalAtividades;
-
-        return ratio >= 0.5;
-    }
 
     public boolean verificarPresencaPorAtividade(Integer atividadeId, Integer participanteId) {
         return presencaRepository.buscarPresencaPorAtividade(atividadeId, participanteId).filter(br.unesp.fct.evcomp.domain.RegistroDePresenca::isPresente).isPresent();
@@ -138,9 +124,9 @@ public class CertificadoService {
             builder.buildConteudo(atividade.getCargaHorariaTotal(), "participante", null);
             builder.gerarPDF(pdfGenerator);
            
+            // Salvar no repositório se necessário
             Certificado cert = builder.obterCertificado();
            
-            // Salvar no repositório se necessário
             return builder.getPdfBytes();
         } else {
             // Emissão geral do evento
@@ -152,7 +138,6 @@ public class CertificadoService {
                 throw new IllegalStateException("Participante não está inscrito em nenhuma atividade deste evento.");
             }
 
-            long totalAtividades = atividades.size();
             long presentesCount = 0;
             int cargaHorariaTotalAcumulada = 0;
 
@@ -160,10 +145,11 @@ public class CertificadoService {
                 boolean presente = presencaRepository.buscarPresencaPorAtividade(at.getId(), participante.getId())
                     .map(p -> p.isPresente())
                     .orElse(false);
+
                 if (presente) {
                     presentesCount++;
+                    cargaHorariaTotalAcumulada += at.getCargaHorariaTotal();
                 }
-                cargaHorariaTotalAcumulada += at.getCargaHorariaTotal();
             }
 
             if (presentesCount == 0) {
@@ -173,15 +159,7 @@ public class CertificadoService {
             int cargaHorariaFinal = 0;
 
             if (evento.getTipoContabilizacao() == TipoContabilizacao.POR_CARGA_TOTAL) {
-                double ratio = (double) presentesCount / totalAtividades;
-                if (ratio == 1.0) {
-                    cargaHorariaFinal = cargaHorariaTotalAcumulada;
-                } else if (ratio >= 0.5) {
-                    cargaHorariaFinal = cargaHorariaTotalAcumulada / 2;
-                } else {
-                    cargaHorariaFinal = 0;
-                    throw new IllegalStateException("Frequência insuficiente para emissão do certificado geral (menor que 50%).");
-                }
+                cargaHorariaFinal = cargaHorariaTotalAcumulada;
             } else {
                 // POR_ATIVIDADE: Carga horária é a soma das atividades em que esteve presente
                 for (Atividade at : atividades) {
@@ -200,9 +178,9 @@ public class CertificadoService {
             builder.buildConteudo(cargaHorariaFinal, "participante", null);
             builder.gerarPDF(pdfGenerator);
 
+            // Salvar no repositório se necessário
             Certificado cert = builder.obterCertificado();
 
-            // Salvar no repositório se necessário
             return builder.getPdfBytes();
         }
     }

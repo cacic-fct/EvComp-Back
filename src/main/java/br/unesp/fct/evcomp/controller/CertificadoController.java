@@ -58,57 +58,53 @@ public class CertificadoController {
         List<br.unesp.fct.evcomp.domain.Inscrição> inscricoes = inscricaoRepository.buscarInscricoesAtivasPorParticipante(participanteId);
         List<Atividade> atividadesMinistradas = atividadeRepository.buscarAtividadesPorMinistrante(participanteId);
         
-        Map<Integer, Map<String, Object>> eventosAgrupados = new HashMap<>();
+        List<Map<String, Object>> eventos = new ArrayList<>();
+        List<Map<String, Object>> atividades = new ArrayList<>();
+        Set<Integer> eventosAdicionados = new HashSet<>();
 
         for (Atividade atividade : atividadesMinistradas) {
-            Evento evento = atividade.getEvento();
-            Integer evId = evento.getId();
-            
-            if (!eventosAgrupados.containsKey(evId)) {
-                Map<String, Object> evData = new HashMap<>();
-                evData.put("eventoId", evId);
-                evData.put("eventoTitulo", evento.getTitulo());
-                evData.put("certificados", new ArrayList<Map<String, Object>>());
-                eventosAgrupados.put(evId, evData);
-            }
-
             Map<String, Object> map = new HashMap<>();
             map.put("tipo", "ATIVIDADE");
             map.put("id", atividade.getId());
             map.put("titulo", atividade.getTitulo() + " [Ministrante]");
             map.put("cargaHoraria", atividade.getCargaHorariaMinistrante());
-            
-            ((List<Map<String, Object>>) eventosAgrupados.get(evId).get("certificados")).add(map);
+            map.put("eventoId", atividade.getEvento().getId());
+            map.put("eventoTitulo", atividade.getEvento().getTitulo());
+            atividades.add(map);
         }
 
         for (br.unesp.fct.evcomp.domain.Inscrição inscricao : inscricoes) {
             Evento evento = inscricao.getEvento();
-            Integer evId = evento.getId();
-            List<Atividade> atividades = inscricao.getAtividade();
+            List<Atividade> atvs = inscricao.getAtividade();
 
-            if (!eventosAgrupados.containsKey(evId)) {
-                Map<String, Object> evData = new HashMap<>();
-                evData.put("eventoId", evId);
-                evData.put("eventoTitulo", evento.getTitulo());
-                evData.put("certificados", new ArrayList<Map<String, Object>>());
-                eventosAgrupados.put(evId, evData);
+            if (!eventosAdicionados.contains(evento.getId())) {
+                Map<String, Object> mapEv = new HashMap<>();
+                mapEv.put("tipo", "EVENTO");
+                mapEv.put("id", evento.getId());
+                mapEv.put("titulo", evento.getTitulo());
+                eventos.add(mapEv);
+                eventosAdicionados.add(evento.getId());
             }
-            
-            List<Map<String, Object>> certs = (List<Map<String, Object>>) eventosAgrupados.get(evId).get("certificados");
 
             if (evento.getTipoContabilizacao() != null && evento.getTipoContabilizacao().name().equals("POR_ATIVIDADE")) {
-                for (Atividade atividade : atividades) {
+                for (Atividade atividade : atvs) {
                     Map<String, Object> map = new HashMap<>();
                     map.put("tipo", "ATIVIDADE");
                     map.put("id", atividade.getId());
                     map.put("titulo", atividade.getTitulo());
                     map.put("cargaHoraria", atividade.getCargaHorariaTotal());
-                    certs.add(map);
+                    map.put("eventoId", evento.getId());
+                    map.put("eventoTitulo", evento.getTitulo());
+                    atividades.add(map);
                 }
             }
         }
 
-        return ResponseEntity.ok(new ArrayList<>(eventosAgrupados.values()));
+        Map<String, Object> response = new HashMap<>();
+        response.put("eventos", eventos);
+        response.put("atividades", atividades);
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/selecionar")
@@ -128,11 +124,9 @@ public class CertificadoController {
                     return ResponseEntity.ok(Map.of("liberado", false, "motivo", "O evento ainda não foi finalizado."));
                 }
                 
-                boolean presencaEvento = certificadoService.verificarPresencaPorEvento(participanteId, eventoId);
-               
                 int totalPresencas = presencaRepository.contarPresencasNoEvento(participanteId, eventoId);
                 
-                if (!presencaEvento || totalPresencas < 1) {
+                if (totalPresencas < 1) {
                     return ResponseEntity.ok(Map.of("liberado", false, "motivo", "Presença mínima não atingida neste evento."));
                 }
 
