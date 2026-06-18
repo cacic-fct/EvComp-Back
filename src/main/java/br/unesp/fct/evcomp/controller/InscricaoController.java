@@ -49,79 +49,84 @@ public class InscricaoController {
         }
     }
 
-    public ResponseEntity<?> inscreverParticipante(String participanteId, String eventoId, List<Integer> atividades) {
+    @Autowired
+    private br.unesp.fct.evcomp.controller.AtividadeController atividadeController;
+
+    public ResponseEntity<?> inscreverParticipante(Integer participanteId, Integer eventoId, List<Integer> atividades) {
         if (participanteId == null || eventoId == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Participante e Evento são obrigatórios."));
         }
 
-        br.unesp.fct.evcomp.domain.Inscrição inscricaoExistente = inscricaoRepository.buscarPorParticipanteEEvento(participanteId, eventoId);
-        if (inscricaoExistente != null && inscricaoExistente.isStatus()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Participante já inscrito neste evento."));
-        }
+        // Por segurança extra não contida no diagrama de confirmar inscrição, checamos se Part. e Ev. existem.
+        Inscricao inscricao = inscricaoRepository.buscarPorParticipanteEEvento(participanteId, eventoId);
 
-        if (eventoRepository.checarAndamentoEvento(eventoId)) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Evento já encerrado."));
-        }
+        Optional<Participante> participante = participanteRepository.buscarParticipantePorId(participanteId);
+        Optional<Evento> evento = eventoRepository.buscarEventoPorId(eventoId);
 
-        Optional<Participante> pOpt = participanteRepository.findById(Integer.valueOf(participanteId));
-        Optional<Evento> eOpt = eventoRepository.buscarEventoPorIdInt(Integer.valueOf(eventoId));
-        
-        if (!pOpt.isPresent() || !eOpt.isPresent()) {
+        if (!inscricao) {
             return ResponseEntity.status(404).body(Map.of("error", "Participante ou Evento não encontrado."));
         }
 
+        // O que fazer aqui?
         if (atividades == null || atividades.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Selecione pelo menos uma atividade para concluir a inscrição no evento."));
         }
 
-        List<Atividade> atividadesObjetos = new ArrayList<>();
-        for (Integer atvId : atividades) {
-            Optional<Atividade> aOpt = atividadeRepository.findById(atvId);
-                if (aOpt.isPresent()) {
-                    Atividade a = aOpt.get();
-                    int maxVagas = a.getMaxParticipantes();
-                    int inscritos = inscricaoRepository.contarInscritosPorAtividadeInt(atvId);
-                    if (inscritos >= maxVagas) {
-                        return ResponseEntity.badRequest().body(Map.of("error", "A atividade '" + a.getTitulo() + "' não possui vagas disponíveis."));
-                    }
-                    
-                    if (a.getDataInicio() != null && a.getHorarioInicio() != null) {
-                        LocalDateTime inicioAtividade = a.getDataInicio().atTime(a.getHorarioInicio());
-                        if (LocalDateTime.now().isAfter(inicioAtividade)) {
-                            return ResponseEntity.badRequest().body(Map.of("error", "A atividade '" + a.getTitulo() + "' já foi iniciada ou encerrada."));
-                        }
-                    }
-
-                    // Validate conflicts
-                    for (Atividade atvAdicionada : atividadesObjetos) {
-                        if (atvAdicionada.verificarConflitoHorarios(a)) {
-                            return ResponseEntity.badRequest().body(Map.of("error", "Conflito de horários entre as atividades selecionadas."));
-                        }
-                    }
-                    atividadesObjetos.add(a);
-                }
-            }
-
-        br.unesp.fct.evcomp.domain.Inscrição inscricao;
-        if (inscricaoExistente != null) {
-            inscricao = inscricaoExistente;
-            inscricao.setStatus(true);
-            inscricao.setDataInscricao(LocalDateTime.now());
-            inscricao.setAtividade(atividadesObjetos);
-        } else {
-            inscricao = new br.unesp.fct.evcomp.domain.Inscrição(
-                LocalDateTime.now(),
-                true,
-                pOpt.get(),
-                eOpt.get(),
-                atividadesObjetos
-            );
-        }
-
-        // Persistência
         inscricaoRepository.salvarInscricao(inscricao);
 
-        return ResponseEntity.ok(inscricao);
+        // List<Atividade> atividadesObjetos = new ArrayList<>();
+        
+        // // --- Delegação para AtividadeController (Diagrama 3) ---
+        // for (Integer atvId : atividades) {
+        //     Optional<Atividade> aOpt = atividadeRepository.findById(atvId);
+        //     if (aOpt.isPresent()) {
+        //         Atividade a = aOpt.get();
+
+        //         // 2: verificarVagas(atividadeId)
+        //         ResponseEntity<?> responseVagas = atividadeController.verificarVagas(String.valueOf(atvId));
+        //         Map<String, Object> bodyVagas = (Map<String, Object>) responseVagas.getBody();
+        //         if ((Integer) bodyVagas.get("vagasDisponiveis") <= 0) {
+        //             return ResponseEntity.badRequest().body(Map.of("error", "A atividade '" + a.getTitulo() + "' não possui vagas disponíveis."));
+        //         }
+                
+        //         // Validação de Cronologia mantida para segurança
+        //         if (a.getDataInicio() != null && a.getHorarioInicio() != null) {
+        //             LocalDateTime inicioAtividade = a.getDataInicio().atTime(a.getHorarioInicio());
+        //             if (LocalDateTime.now().isAfter(inicioAtividade)) {
+        //                 return ResponseEntity.badRequest().body(Map.of("error", "A atividade '" + a.getTitulo() + "' já foi iniciada ou encerrada."));
+        //             }
+        //         }
+        //         atividadesObjetos.add(a);
+        //     }
+        // }
+        
+        // // 3: verificarConflitos(atividades, atividadeId)
+        // for (Integer atvId : atividades) {
+        //     ResponseEntity<?> responseConflitos = atividadeController.verificarConflitos(atividades, atvId);
+        //     Map<String, Object> bodyConflitos = (Map<String, Object>) responseConflitos.getBody();
+        //     if ((Boolean) bodyConflitos.get("conflitoDetectado")) {
+        //         return ResponseEntity.badRequest().body(Map.of("error", bodyConflitos.get("mensagem")));
+        //     }
+        // }
+
+        // // --- Delegação para InscricaoRepository (Diagrama 4) ---
+        // // 1: confirmarInscricao(participanteId, eventoId, atividades) -> 2: inscreverParticipante
+        // // Checamos a dupla inscrição:
+        // br.unesp.fct.evcomp.domain.Inscrição inscricaoExistente = inscricaoRepository.buscarPorParticipanteEEvento(participanteId, eventoId);
+        // if (inscricaoExistente != null && inscricaoExistente.isStatus()) {
+        //     return ResponseEntity.badRequest().body(Map.of("error", "Participante já inscrito neste evento."));
+        // }
+
+        // // Salvar a Inscrição delegando ao Repositório
+        // br.unesp.fct.evcomp.domain.Inscrição inscricaoEfetuada = inscricaoRepository.inscreverParticipante(
+        //     participanteId, 
+        //     eventoId, 
+        //     atividadesObjetos, 
+        //     pOpt.get(), 
+        //     eOpt.get()
+        // );
+
+        // return ResponseEntity.ok(inscricaoEfetuada);
     }
 
     @GetMapping("/minhas")

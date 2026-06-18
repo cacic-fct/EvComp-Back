@@ -48,7 +48,7 @@ public class CertificadoService {
 
         // 2.2.1 e 2.2.3: buscar evento
         if (eventoId != null) {
-            evento = eventoRepository.buscarEventoPorIdInt(eventoId).orElse(null);
+            evento = eventoRepository.buscarEventoPorId(eventoId).orElse(null);
             if (evento != null) tipo = eventoRepository.buscarTipoEvento(eventoId);
         } else if (atividadeId != null) {
             atividade = atividadeRepository.findById(atividadeId).orElse(null);
@@ -68,7 +68,7 @@ public class CertificadoService {
 
         // Validações de andamento e presença
         if (atividadeId != null) {
-            if (atividadeRepository.checarAndamentoAtividade(String.valueOf(atividadeId)) || eventoRepository.checarAndamentoEvento(String.valueOf(evento.getId()))) {
+            if (atividadeRepository.checarAndamentoAtividade(String.valueOf(atividadeId)) || eventoRepository.checarAndamentoEvento(evento.getId())) {
                 dadosEmissao.put("error", "A atividade (ou evento) ainda não foi finalizada.");
                 return dadosEmissao;
             }
@@ -78,7 +78,7 @@ public class CertificadoService {
                 return dadosEmissao;
             }
         } else {
-            if (eventoRepository.checarAndamentoEvento(String.valueOf(evento.getId()))) {
+            if (eventoRepository.checarAndamentoEvento(evento.getId())) {
                 dadosEmissao.put("error", "O evento ainda não foi finalizado.");
                 return dadosEmissao;
             }

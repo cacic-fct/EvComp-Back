@@ -25,10 +25,6 @@ public interface InscricaoRepository extends JpaRepository<Inscrição, Integer>
     @org.springframework.data.jpa.repository.Query("SELECT i FROM Inscrição i JOIN i.atividade a WHERE a.id = :atividadeId AND i.status = true")
     List<Inscrição> buscarInscricoesPorAtividade(@Param("atividadeId") Integer atividadeId);
 
-    default Inscrição buscarPorParticipanteEEvento(String participanteId, String eventoId) {
-        return buscarPorParticipanteEEvento(Integer.valueOf(participanteId), Integer.valueOf(eventoId)).orElse(null);
-    }
-
     @org.springframework.data.jpa.repository.Query("SELECT COUNT(i) FROM Inscrição i JOIN i.atividade a WHERE a.id = :atividadeId")
     int contarInscritosPorAtividadeInt(@org.springframework.data.repository.query.Param("atividadeId") Integer atividadeId);
 
@@ -40,5 +36,26 @@ public interface InscricaoRepository extends JpaRepository<Inscrição, Integer>
         this.save(inscricao);
     }
     
+    default br.unesp.fct.evcomp.domain.Inscrição inscreverParticipante(Integer participanteId, Integer eventoId, java.util.List<Atividade> atividades, Participante p, br.unesp.fct.evcomp.domain.Evento e) {
+        Inscrição inscricaoExistente = buscarPorParticipanteEEvento(participanteId, eventoId);
+        Inscrição inscricao;
+        if (inscricaoExistente != null) {
+            inscricao = inscricaoExistente;
+            inscricao.setStatus(true);
+            inscricao.setDataInscricao(java.time.LocalDateTime.now());
+            inscricao.setAtividade(atividades);
+        } else {
+            inscricao = new Inscrição(
+                java.time.LocalDateTime.now(),
+                true,
+                p,
+                e,
+                atividades
+            );
+        }
+        salvarInscricao(inscricao);
+        return inscricao;
+    }
+
     default boolean buscarPorParticipanteEAtividade(String participanteId, String atividadeId) { return false; }
 }

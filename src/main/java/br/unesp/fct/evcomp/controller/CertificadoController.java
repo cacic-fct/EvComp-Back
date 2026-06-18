@@ -67,7 +67,7 @@ public class CertificadoController {
             map.put("titulo", atividade.getTitulo() + " (" + evento.getTitulo() + ") [Ministrante]");
             map.put("cargaHoraria", atividade.getCargaHorariaMinistrante());
 
-            boolean andamento = eventoRepository.checarAndamentoEvento(String.valueOf(evento.getId()));
+            boolean andamento = eventoRepository.checarAndamentoEvento(evento.getId());
 
             if (andamento) {
                 map.put("liberado", false);
@@ -92,7 +92,7 @@ public class CertificadoController {
                     map.put("cargaHoraria", atividade.getCargaHorariaTotal());
 
                     boolean presente = certificadoService.verificarPresencaPorAtividade(participanteId.toString(), String.valueOf(atividade.getId()));
-                    boolean andamento = eventoRepository.checarAndamentoEvento(String.valueOf(evento.getId()));
+                    boolean andamento = eventoRepository.checarAndamentoEvento(evento.getId());
 
                     if (!presente) {
                         map.put("liberado", false);
@@ -119,7 +119,7 @@ public class CertificadoController {
             mapEv.put("titulo", evento.getTitulo());
 
             boolean frequenciaSuficiente = certificadoService.verificarPresencaPorEvento(participanteId.toString(), String.valueOf(evento.getId()));
-            boolean andamento = eventoRepository.checarAndamentoEvento(String.valueOf(evento.getId()));
+            boolean andamento = eventoRepository.checarAndamentoEvento(evento.getId());
             double ratio = totalAtividades > 0 ? (double) presencas / totalAtividades : 0;
 
             mapEv.put("cargaHoraria", frequenciaSuficiente ? (ratio == 1.0 ? cargaHorariaTotal : cargaHorariaTotal / 2) : 0);

@@ -24,6 +24,9 @@ public class EventoController {
     private final ParticipanteRepository participanteRepository;
     private final br.unesp.fct.evcomp.repository.SessaoRepository sessaoRepository;
     private final br.unesp.fct.evcomp.repository.InscricaoRepository inscricaoRepository;
+    
+    @Autowired
+    private br.unesp.fct.evcomp.repository.AtividadeRepository atividadeRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -44,6 +47,11 @@ public class EventoController {
     @GetMapping("/disponiveis")
     public ResponseEntity<List<Evento>> listarEventosDisponiveis() {
         return ResponseEntity.ok(eventoRepository.buscarEventosDisponiveis());
+    }
+
+    @GetMapping("/disponiveis/{participanteId}")
+    public ResponseEntity<List<Evento>> solicitarEventosDisponiveis(@PathVariable Integer participanteId) {
+        return ResponseEntity.ok(eventoRepository.buscarEventosDisponiveisPorParticipante(participanteId));
     }
 
     @GetMapping("/{id}/participantes")
@@ -103,7 +111,6 @@ public class EventoController {
     }
 
     public void buscarEvento(String eventoId) {}
-    public void solicitarEventosDisponiveis(String participanteId) {}
 
     @PostMapping("/{eventoId}/coletores/{participanteId}")
     public ResponseEntity<?> tornarColetor(@PathVariable String eventoId, @PathVariable("participanteId") String participanteId) {
@@ -156,7 +163,26 @@ public class EventoController {
         }
     }
 
-    public void selecionarEvento(String eventoId) {}
+    @GetMapping("/{id}/detalhes-inscricao")
+    public ResponseEntity<?> selecionarEvento(@PathVariable Integer eventoId) {
+        Optional<Evento> eventoOpt = eventoRepository.buscarEventoPorId(eventoId);
+
+        if (!eventoOpt.isPresent()) {
+            return ResponseEntity.status(404).body(Map.of("error", "Evento não encontrado."));
+        }
+
+        Evento evento = eventoOpt.get();
+
+        Map<String, Object> dadosEvento = evento.pegarDadosEvento();
+
+        List<br.unesp.fct.evcomp.domain.Atividade> atividades = atividadeRepository.buscarAtividadesPorEvento(eventoId);
+        
+        return ResponseEntity.ok(Map.of(
+            "dadosEvento", dadosEvento,
+            "atividades", atividades
+        ));
+    }
+
     public void solicitarEventos() {}
     public void buscarParticipantesPorEvento(String eventoId) {}
     public void buscarColetoresPorEvento(String eventoId) {}
@@ -227,7 +253,7 @@ public class EventoController {
     }
 
     public ResponseEntity<?> confirmarEdicao(Integer id, String titulo, LocalDate dataInicio, LocalDate dataTermino, String descricao, String link, String tipo) {
-        Optional<Evento> evOpt = eventoRepository.buscarEventoPorIdInt(id);
+        Optional<Evento> evOpt = eventoRepository.buscarEventoPorId(id);
         if (!evOpt.isPresent()) return ResponseEntity.status(404).body(Map.of("error", "Evento não encontrado."));
         
         Evento evento = evOpt.get();

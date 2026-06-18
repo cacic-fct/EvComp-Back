@@ -1,7 +1,6 @@
 package br.unesp.fct.evcomp.domain;
 
 import jakarta.persistence.*;
-import jakarta.persistence.DiscriminatorType;
 
 @Entity
 @Table(name = "usuário")
@@ -23,6 +22,7 @@ public abstract class Usuário {
     @Column(nullable = false, unique = true)
     protected String email;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @Column(name = "senha_hash")
     protected String senha;
 

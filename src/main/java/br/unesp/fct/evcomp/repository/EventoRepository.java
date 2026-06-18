@@ -18,14 +18,12 @@ public interface EventoRepository extends JpaRepository<Evento, Integer> {
     boolean verificarEventoCadastrado(@org.springframework.data.repository.query.Param("tituloEvento") String tituloEvento);
 
     @org.springframework.data.jpa.repository.Query("SELECT e FROM Evento e WHERE e.id = :eventoId")
-    Optional<Evento> buscarEventoPorIdInt(@org.springframework.data.repository.query.Param("eventoId") Integer eventoId);
+    Optional<Evento> buscarEventoPorId(@org.springframework.data.repository.query.Param("eventoId") Integer eventoId);
 
-    default Evento buscarEventoPorId(String eventoId) { 
-        return buscarEventoPorIdInt(Integer.valueOf(eventoId)).orElse(null); 
-    }
 
-    default boolean checarAndamentoEvento(String eventoId) { 
-        Optional<Evento> ev = buscarEventoPorIdInt(Integer.valueOf(eventoId));
+    default boolean checarAndamentoEvento(Integer eventoId) { 
+        Optional<Evento> ev = buscarEventoPorId(eventoId);
+
         if (ev.isPresent()) {
             Evento evento = ev.get();
             if (evento.getDataFim() == null) return true;
@@ -40,6 +38,10 @@ public interface EventoRepository extends JpaRepository<Evento, Integer> {
 
     @org.springframework.data.jpa.repository.Query("SELECT e FROM Evento e WHERE e.dataFim >= CURRENT_DATE")
     java.util.List<Evento> buscarEventosDisponiveis();
+
+    @org.springframework.data.jpa.repository.Query("SELECT e FROM Evento e WHERE e.dataFim >= CURRENT_DATE AND e.id NOT IN (SELECT i.evento.id FROM Inscrição i WHERE i.participante.id = :participanteId AND i.status = true)")
+    java.util.List<Evento> buscarEventosDisponiveisPorParticipante(@org.springframework.data.repository.query.Param("participanteId") Integer participanteId);
+
     default TipoContabilizacao buscarTipoEvento(Integer eventoId) {
         return findById(eventoId).map(Evento::getTipoContabilizacao).orElse(null);
     }

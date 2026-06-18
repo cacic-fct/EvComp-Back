@@ -298,13 +298,12 @@ public class AtividadeController {
     }
 
     @GetMapping("/{id}/vagas")
-    public ResponseEntity<?> verificarVagasWeb(@PathVariable Integer id) {
-        return verificarVagas(String.valueOf(id));
+    public ResponseEntity<?> verificarVagas(@PathVariable("id") Integer atividadeId) {
+        Integer vagas = atividadeRepository.consultarVagasDisponiveis(atividadeId);
+        
+        int vagasDisponiveis = vagas != null ? vagas : 0;
+
+        return ResponseEntity.ok(Map.of("vagasDisponiveis", Math.max(0, vagasDisponiveis)));
     }
 
-    public ResponseEntity<?> verificarVagas(String atividadeId) {
-        int maxVagas = atividadeRepository.findById(Integer.valueOf(atividadeId)).map(Atividade::getMaxParticipantes).orElse(0);
-        int inscritos = inscricaoRepository.contarInscritosPorAtividadeInt(Integer.valueOf(atividadeId));
-        return ResponseEntity.ok(Map.of("vagasDisponiveis", Math.max(0, maxVagas - inscritos)));
-    }
 }
