@@ -36,10 +36,10 @@ public interface EventoRepository extends JpaRepository<Evento, Integer> {
         return false;
     }
 
-    @org.springframework.data.jpa.repository.Query("SELECT e FROM Evento e WHERE e.dataFim >= CURRENT_DATE")
+    @org.springframework.data.jpa.repository.Query("SELECT e FROM Evento e WHERE e.dataFim >= CURRENT_DATE AND EXISTS (SELECT a FROM Atividade a WHERE a.evento.id = e.id)")
     java.util.List<Evento> buscarEventosDisponiveis();
 
-    @org.springframework.data.jpa.repository.Query("SELECT e FROM Evento e WHERE e.dataFim >= CURRENT_DATE AND e.id NOT IN (SELECT i.evento.id FROM Inscrição i WHERE i.participante.id = :participanteId AND i.status = true)")
+    @org.springframework.data.jpa.repository.Query("SELECT e FROM Evento e WHERE e.dataFim >= CURRENT_DATE AND EXISTS (SELECT a FROM Atividade a WHERE a.evento.id = e.id) AND e.id NOT IN (SELECT i.evento.id FROM Inscrição i WHERE i.participante.id = :participanteId AND i.status = true)")
     java.util.List<Evento> buscarEventosDisponiveisPorParticipante(@org.springframework.data.repository.query.Param("participanteId") Integer participanteId);
 
     default TipoContabilizacao buscarTipoEvento(Integer eventoId) {
