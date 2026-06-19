@@ -38,12 +38,12 @@ public interface ParticipanteRepository extends JpaRepository<Participante, Inte
     int contarEventosDoColetor(@org.springframework.data.repository.query.Param("idUsuario") Integer idUsuario);
 
 
-    default boolean salvarNovasInformacoesParticipante(Integer participanteId, String nome, String ra) {
+    default boolean salvarNovasInformacoesParticipante(Integer participanteId, String nomeCompleto, String ra) {
         Optional<Participante> p = buscarParticipantePorId(participanteId);
 
         if (p.isPresent()) {
             Participante part = p.get();
-            part.setNome(nome);
+            part.setNomeCompleto(nomeCompleto);
             part.setRA(ra);
             save(part);
             return true;

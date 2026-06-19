@@ -13,11 +13,8 @@ public abstract class Usuário {
     @Column(name = "idUsuário")
     protected Integer id;
 
-    @Column(nullable = false)
-    protected String nome;
-
-    @Column(name = "sobrenome", nullable = false)
-    protected String sobrenome;
+    @Column(name = "nome_completo", nullable = false)
+    protected String nomeCompleto;
 
     @Column(nullable = false, unique = true)
     protected String email;
@@ -32,9 +29,8 @@ public abstract class Usuário {
     public Usuário() {
     }
 
-    public Usuário(String nome, String sobrenome, String email, String senha) {
-        this.nome = nome;
-        this.sobrenome = sobrenome;
+    public Usuário(String nomeCompleto, String email, String senha) {
+        this.nomeCompleto = nomeCompleto;
         this.email = email;
         this.senha = senha;
     }
@@ -60,20 +56,12 @@ public abstract class Usuário {
         this.id = id;
     }
 
-    public String getNome() {
-        return nome;
+    public String getNomeCompleto() {
+        return nomeCompleto;
     }
 
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
-
-    public String getSobrenome() {
-        return sobrenome;
-    }
-
-    public void setSobrenome(String sobrenome) {
-        this.sobrenome = sobrenome;
+    public void setNomeCompleto(String nomeCompleto) {
+        this.nomeCompleto = nomeCompleto;
     }
 
     public String getEmail() {

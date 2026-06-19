@@ -10,10 +10,10 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/cadastro")
-
 public class CadastroController {
 
     private final ParticipanteRepository participanteRepository;
+    
     @Autowired
     public CadastroController(ParticipanteRepository participanteRepository) {
         this.participanteRepository = participanteRepository;
@@ -21,7 +21,7 @@ public class CadastroController {
 
     @PostMapping
     public ResponseEntity<?> confirmarCadastro(@RequestBody Map<String, String> payload) {
-        String nome = payload.get("nome");
+        String nomeCompleto = payload.get("nome"); // assumindo que o frontend envia em 'nome'
         String email = payload.get("email");
         String senha = payload.get("senha");
         String ra = payload.get("ra");
@@ -32,7 +32,7 @@ public class CadastroController {
 
         try {
             String senhaHash = org.mindrot.jbcrypt.BCrypt.hashpw(senha, org.mindrot.jbcrypt.BCrypt.gensalt());
-            Participante p = Participante.criarParticipante(nome, "", email, senhaHash);
+            Participante p = Participante.criarParticipante(nomeCompleto, email, senhaHash);
 
             if (ra != null && !ra.isEmpty()) {
                 p.setRA(ra);

@@ -185,7 +185,7 @@ public class CertificadoController {
             Atividade atividade = atividadeId != null ? (Atividade) dadosEmissao.get("atividade") : null;
 
             pdfBytes = certificadoService.gerarCertificado(dadosParticipante, dadosEmissao);
-            nomeArquivo = dadosParticipante.getNome() + " - " + (atividade != null ? atividade.getTitulo() : evento.getTitulo()) + ".pdf";
+            nomeArquivo = dadosParticipante.getNomeCompleto() + " - " + (atividade != null ? atividade.getTitulo() : evento.getTitulo()) + ".pdf";
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);

@@ -52,7 +52,7 @@ public class RelatorioParticipantesStrategy extends RelatorioStrategyFactory {
             for (Participante p : participantes) {
                 String raStr = p.getRA() != null ? p.getRA() : "Externo";
                 linhas.append("<tr>");
-                linhas.append("<td>").append(p.getNome()).append("</td>");
+                linhas.append("<td>").append(p.getNomeCompleto()).append("</td>");
                 linhas.append("<td>").append(p.getEmail()).append("</td>");
                 linhas.append("<td>").append(raStr).append("</td>");
                 linhas.append("</tr>");

@@ -109,7 +109,7 @@ public class PresencaController {
             RegistroDePresenca presenca = salvarPresenca(participanteAutenticado, atividade);
 
             // 9. exibirMensagemSucesso
-            return exibirMensagemSucesso("Presença de " + participanteAutenticado.getNome() + " registrada com sucesso!", presenca);
+            return exibirMensagemSucesso("Presença de " + participanteAutenticado.getNomeCompleto() + " registrada com sucesso!", presenca);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -157,7 +157,7 @@ public class PresencaController {
     private ResponseEntity<?> exibirMensagemSucesso(String msg, RegistroDePresenca data) {
         Map<String, Object> presencaDto = Map.of(
             "participante", Map.of(
-                "nome", data.getParticipante().getNome()
+                "nome", data.getParticipante().getNomeCompleto()
             )
         );
         return ResponseEntity.ok(Map.of("message", msg, "presenca", presencaDto));

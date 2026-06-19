@@ -40,10 +40,10 @@ public class ParticipanteController {
 
     @PutMapping("/{id}")
     public ResponseEntity<?> editarParticipante(@PathVariable("id") Integer participanteId, @RequestBody Map<String, String> body) {
-        String nome = body.get("nome");
+        String nomeCompleto = body.get("nome"); // Mantém 'nome' para compatibilidade com o frontend
         String ra = body.get("ra");
         
-        boolean informacoesAlteradas = participanteRepository.salvarNovasInformacoesParticipante(participanteId, nome, ra);
+        boolean informacoesAlteradas = participanteRepository.salvarNovasInformacoesParticipante(participanteId, nomeCompleto, ra);
         
         if (informacoesAlteradas) {
             return ResponseEntity.ok(Map.of("success", true, "message", "Informações atualizadas com sucesso"));

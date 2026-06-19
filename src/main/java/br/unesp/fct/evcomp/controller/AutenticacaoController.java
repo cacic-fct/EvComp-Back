@@ -58,7 +58,7 @@ public class AutenticacaoController {
                     }
                     return ResponseEntity.ok(Map.of(
                         "message", "Login bem-sucedido", 
-                        "nome", usuarioExiste.getNome(), 
+                        "nome", usuarioExiste.getNomeCompleto(), 
                         "role", usuarioExiste.getRole(),
                         "isColetor", String.valueOf(isColetor),
                         "token", novaSessao.getToken()
@@ -113,7 +113,7 @@ public class AutenticacaoController {
             br.unesp.fct.evcomp.domain.Usuário user = sessaoOpt.get().getUsuario();
             Map<String, String> userData = new java.util.HashMap<>();
             userData.put("id", String.valueOf(user.getId()));
-            userData.put("nome", user.getNome());
+            userData.put("nome", user.getNomeCompleto());
             userData.put("email", user.getEmail());
             userData.put("role", user.getRole());
             if (user instanceof br.unesp.fct.evcomp.domain.Participante) {
