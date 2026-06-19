@@ -31,13 +31,9 @@ public class Participante extends Usuário {
         this.secretSeed = gerarSecretSeed();
     }
 
-    public Participante(String nome, String sobrenome, String email, String senha, String ra) {
-        super(nome, sobrenome, email, senha);
-        this.RA = ra;
-        this.secretSeed = gerarSecretSeed();
-    }
 
-    public Participante criarParticipante(String nome, String sobrenome, String email, String senha) {
+
+    public static Participante criarParticipante(String nome, String sobrenome, String email, String senha) {
         return new Participante(nome, sobrenome, email, senha);
     }
 

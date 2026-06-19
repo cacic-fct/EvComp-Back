@@ -14,28 +14,6 @@ public interface ParticipanteRepository extends JpaRepository<Participante, Inte
     @org.springframework.data.jpa.repository.Query("SELECT p FROM Participante p WHERE p.id = :id")
     Optional<Participante> buscarParticipantePorId(@org.springframework.data.repository.query.Param("id") Integer id);
 
-    default boolean salvarNovasInformacoesParticipante(Integer participanteId, String nome, String ra) {
-        Optional<Participante> p = buscarParticipantePorId(participanteId);
-
-        if (p.isPresent()) {
-            Participante part = p.get();
-            part.setNome(nome);
-            part.setRA(ra);
-            save(part);
-            return true;
-        }
-        return false;
-    }
-
-
-
-    default boolean verificarEmailCadastrado(String email) {
-        return false;
-    }
-
-    default boolean salvarNovoParticipante(String nome, String email, String senha) {
-        return false;
-    }
     @org.springframework.data.jpa.repository.Modifying
     @org.springframework.transaction.annotation.Transactional
     @org.springframework.data.jpa.repository.Query(value = "UPDATE usuário SET tipo_usuario = 'COL' WHERE idUsuário = :id", nativeQuery = true)
@@ -58,4 +36,26 @@ public interface ParticipanteRepository extends JpaRepository<Participante, Inte
 
     @org.springframework.data.jpa.repository.Query(value = "SELECT COUNT(*) FROM coletor_presença WHERE idUsuário = :idUsuario", nativeQuery = true)
     int contarEventosDoColetor(@org.springframework.data.repository.query.Param("idUsuario") Integer idUsuario);
+
+
+    default boolean salvarNovasInformacoesParticipante(Integer participanteId, String nome, String ra) {
+        Optional<Participante> p = buscarParticipantePorId(participanteId);
+
+        if (p.isPresent()) {
+            Participante part = p.get();
+            part.setNome(nome);
+            part.setRA(ra);
+            save(part);
+            return true;
+        }
+        return false;
+    }
+
+    default boolean verificarEmailCadastrado(String email) {
+        return buscarPartcipantePorEmail(email).isPresent();
+    }
+
+    default void salvarNovoParticipante(Participante novoParticipante) {
+        save(novoParticipante);
+    }
 }

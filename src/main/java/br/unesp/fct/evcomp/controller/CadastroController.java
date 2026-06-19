@@ -20,9 +20,26 @@ public class CadastroController {
     }
 
     @PostMapping
-    public ResponseEntity<?> confirmarCadastroWeb(@RequestBody Map<String, String> payload) {
+    public ResponseEntity<?> confirmarCadastro(@RequestBody Map<String, String> payload) {
+        String nome = payload.get("nome");
+        String email = payload.get("email");
+        String senha = payload.get("senha");
+        String ra = payload.get("ra");
+
+        if (participanteRepository.verificarEmailCadastrado(email)) {
+            return ResponseEntity.status(400).body(Map.of("error", "Erro: Este e-mail já está em uso."));
+        }
+
         try {
-            confirmarCadastro(payload.get("nome"), payload.get("email"), payload.get("senha"), payload.get("ra"));
+            String senhaHash = org.mindrot.jbcrypt.BCrypt.hashpw(senha, org.mindrot.jbcrypt.BCrypt.gensalt());
+            Participante p = Participante.criarParticipante(nome, "", email, senhaHash);
+
+            if (ra != null && !ra.isEmpty()) {
+                p.setRA(ra);
+            }
+
+            participanteRepository.salvarNovoParticipante(p);
+
             return ResponseEntity.ok().body(Map.of("message", "Cadastro realizado com sucesso"));
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
             System.err.println("Erro de violação de integridade (e-mail ou RA duplicado): " + e.getMessage());
@@ -31,16 +48,5 @@ public class CadastroController {
             System.err.println("Erro desconhecido ao cadastrar usuário: " + e.getMessage());
             return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro interno no servidor. Tente novamente mais tarde."));
         }
-    }
-
-    public void confirmarCadastro(String nome, String email, String senha, String ra) {
-        // Se o nome vier com espaço, podemos tentar separar nome e sobrenome, 
-        // mas por enquanto passaremos o nome completo no primeiro campo e vazio no segundo
-        String senhaHash = org.mindrot.jbcrypt.BCrypt.hashpw(senha, org.mindrot.jbcrypt.BCrypt.gensalt());
-        Participante p = new Participante(nome, "", email, senhaHash);
-        if (ra != null && !ra.isEmpty()) {
-            p.setRA(ra);
-        }
-        participanteRepository.save(p);
     }
 }

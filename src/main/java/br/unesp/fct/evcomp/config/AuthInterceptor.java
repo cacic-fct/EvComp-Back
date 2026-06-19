@@ -29,7 +29,7 @@ public class AuthInterceptor implements HandlerInterceptor {
         String path = request.getRequestURI();
 
         // Libera rotas públicas
-        if (path.startsWith("/api/auth") || path.startsWith("/api/usuarios/cadastro") || path.startsWith("/error") || path.startsWith("/h2-console")) {
+        if (path.startsWith("/api/auth") || path.startsWith("/api/cadastro") || path.startsWith("/api/usuarios/cadastro") || path.startsWith("/error")) {
             return true;
         }
 
