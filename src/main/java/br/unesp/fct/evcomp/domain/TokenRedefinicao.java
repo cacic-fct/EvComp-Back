@@ -19,15 +19,16 @@ public class TokenRedefinicao {
     public TokenRedefinicao() {
     }
 
-    public TokenRedefinicao gerarToken() {
+    public static TokenRedefinicao gerarToken() {
+        TokenRedefinicao tokenObj = new TokenRedefinicao();
         Random random = new Random();
-        this.tokenGerado = 100000 + random.nextInt(900000); // 6 digits token
-        this.dataExpiracao = LocalDateTime.now().plusHours(1); // 1 hour validity
-        this.utilizado = false;
+        tokenObj.tokenGerado = 100000 + random.nextInt(900000); // 6 digits token
+        tokenObj.dataExpiracao = LocalDateTime.now().plusHours(1); // 1 hour validity
+        tokenObj.utilizado = false;
         
         // Salva na memória
-        tokensEmMemoria.put(this.tokenGerado, this);
-        return this;
+        tokensEmMemoria.put(tokenObj.tokenGerado, tokenObj);
+        return tokenObj;
     }
 
     public boolean validarToken(int tokenRecebido, TokenRedefinicao tokenGeradoObj) {

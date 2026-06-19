@@ -33,9 +33,8 @@ public class RedefinicaoSenhaController {
             Optional<Usuário> userOpt = usuarioRepository.buscarUsuarioPorEmail(email);
             if (userOpt.isPresent()) {
                 Usuário user = userOpt.get();
-                TokenRedefinicao tokenObj = new TokenRedefinicao();
+                TokenRedefinicao tokenObj = TokenRedefinicao.gerarToken();
                 tokenObj.setUsuario(user);
-                tokenObj = tokenObj.gerarToken();
                 sistemaEmail.enviarEmailRedefinicao(email, tokenObj.getTokenGerado());
             }
         }
