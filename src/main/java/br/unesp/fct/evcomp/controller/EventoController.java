@@ -248,8 +248,11 @@ public class EventoController {
     }
 
     public ResponseEntity<?> confirmarConsulta(String tituloEvento) {
-        java.util.List<Evento> evs = eventoRepository.buscarEventosPorTituloParcial(tituloEvento);
-        return evs.isEmpty() ? ResponseEntity.status(404).body(Map.of("error", "Nenhum evento encontrado com este título.")) : ResponseEntity.ok(evs);
+        java.util.List<Evento> listaEventos = eventoRepository.buscarEventosPorTituloParcial(tituloEvento);
+        if(listaEventos.isEmpty()){
+            return ResponseEntity.status(404).body(Map.of("error", "Nenhum evento encontrado com este título."));
+        }
+        return ResponseEntity.ok(listaEventos);
     }
 
     public ResponseEntity<?> confirmarEdicao(Integer id, String titulo, LocalDate dataInicio, LocalDate dataTermino, String descricao, String link, String tipo) {
