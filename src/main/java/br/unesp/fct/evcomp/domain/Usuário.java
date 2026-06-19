@@ -37,7 +37,9 @@ public abstract class Usuário {
 
     public boolean validarSenha(String senhaParaVerificar, Usuário usuarioExiste) {
         String hashNoBanco = usuarioExiste.getSenha();
+
         try {
+            //TO-DO: Retirar o $2a$ e o else. Isso é só para TESTES!
             if (hashNoBanco != null && hashNoBanco.startsWith("$2a$")) {
                 return org.mindrot.jbcrypt.BCrypt.checkpw(senhaParaVerificar, hashNoBanco);
             } else {

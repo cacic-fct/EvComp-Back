@@ -51,18 +51,23 @@ public class AutenticacaoController {
                 boolean sessaoIniciada = novaSessao.iniciarSessao(usuarioExiste);
                 
                 if (sessaoIniciada) {
-                    sessaoRepository.save(novaSessao);
-                    boolean isColetor = false;
-                    if (usuarioExiste instanceof br.unesp.fct.evcomp.domain.ColetorDePresenca) {
-                         isColetor = !((br.unesp.fct.evcomp.domain.ColetorDePresenca) usuarioExiste).getEventosColetados().isEmpty();
+                    boolean sessaoSalva = sessaoRepository.salvarNovaSessao(novaSessao);
+                    
+                    if (sessaoSalva) {
+                        boolean isColetor = false;
+                        // Não basta apenas ser coletor, o usuário deve ser coletor de algum evento.
+                        if (usuarioExiste instanceof br.unesp.fct.evcomp.domain.ColetorDePresenca) {
+                             isColetor = !((br.unesp.fct.evcomp.domain.ColetorDePresenca) usuarioExiste).getEventosColetados().isEmpty();
+                        }
+
+                        return ResponseEntity.ok(Map.of(
+                            "message", "Login bem-sucedido", 
+                            "nome", usuarioExiste.getNomeCompleto(), 
+                            "role", usuarioExiste.getRole(),
+                            "isColetor", String.valueOf(isColetor),
+                            "token", novaSessao.getToken()
+                        ));
                     }
-                    return ResponseEntity.ok(Map.of(
-                        "message", "Login bem-sucedido", 
-                        "nome", usuarioExiste.getNomeCompleto(), 
-                        "role", usuarioExiste.getRole(),
-                        "isColetor", String.valueOf(isColetor),
-                        "token", novaSessao.getToken()
-                    ));
                 }
             }
         }

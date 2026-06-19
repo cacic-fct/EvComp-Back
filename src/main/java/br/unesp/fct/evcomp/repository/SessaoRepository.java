@@ -20,6 +20,12 @@ public class SessaoRepository {
         return sessao;
     }
 
+    public boolean salvarNovaSessao(Sessao sessao) {
+        save(sessao);
+
+        return true;
+    }
+
     public Optional<Sessao> buscarSessaoPorToken(String token) {
         return sessoes.values().stream()
                 .filter(s -> s.getToken() != null && s.getToken().equals(token))
