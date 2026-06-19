@@ -22,18 +22,21 @@ public class TokenRedefinicao {
     public static TokenRedefinicao gerarToken() {
         TokenRedefinicao tokenObj = new TokenRedefinicao();
         Random random = new Random();
-        tokenObj.tokenGerado = 100000 + random.nextInt(900000); // 6 digits token
-        tokenObj.dataExpiracao = LocalDateTime.now().plusHours(1); // 1 hour validity
+        tokenObj.tokenGerado = 100000 + random.nextInt(900000); // token de 6 digitos
+        tokenObj.dataExpiracao = LocalDateTime.now().plusHours(1); // validade de 1 hora
         tokenObj.utilizado = false;
         
         // Salva na memória
         tokensEmMemoria.put(tokenObj.tokenGerado, tokenObj);
+
         return tokenObj;
     }
 
     public boolean validarToken(int tokenRecebido, TokenRedefinicao tokenGeradoObj) {
         if (this.utilizado) return false;
+
         if (LocalDateTime.now().isAfter(this.dataExpiracao)) return false;
+
         return this.tokenGerado == tokenRecebido;
     }
 
@@ -41,7 +44,15 @@ public class TokenRedefinicao {
         this.utilizado = true;
     }
 
-    public static Optional<TokenRedefinicao> findByToken(int token) {
+    public static void invalidarTokensDoUsuario(Integer usuarioId) {
+        for (TokenRedefinicao token : tokensEmMemoria.values()) {
+            if (token.getUsuario() != null && token.getUsuario().getId().equals(usuarioId)) {
+                token.invalidarToken();
+            }
+        }
+    }
+
+    public static Optional<TokenRedefinicao> buscarPorToken(int token) {
         return Optional.ofNullable(tokensEmMemoria.get(token));
     }
 
