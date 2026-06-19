@@ -55,6 +55,7 @@ public class AutenticacaoController {
                     
                     if (sessaoSalva) {
                         boolean isColetor = false;
+
                         // Não basta apenas ser coletor, o usuário deve ser coletor de algum evento.
                         if (usuarioExiste instanceof br.unesp.fct.evcomp.domain.ColetorDePresenca) {
                              isColetor = !((br.unesp.fct.evcomp.domain.ColetorDePresenca) usuarioExiste).getEventosColetados().isEmpty();
