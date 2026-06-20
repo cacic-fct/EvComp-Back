@@ -14,6 +14,9 @@ public interface ParticipanteRepository extends JpaRepository<Participante, Inte
     @org.springframework.data.jpa.repository.Query("SELECT p FROM Participante p WHERE p.id = :id")
     Optional<Participante> buscarParticipantePorId(@org.springframework.data.repository.query.Param("id") Integer id);
 
+    @org.springframework.data.jpa.repository.Query("SELECT p FROM Participante p WHERE p.id IN :ids")
+    java.util.List<Participante> buscarParticipantesPorId(@org.springframework.data.repository.query.Param("ids") java.util.List<Integer> ids);
+
     @org.springframework.data.jpa.repository.Modifying
     @org.springframework.transaction.annotation.Transactional
     @org.springframework.data.jpa.repository.Query(value = "UPDATE usuário SET tipo_usuario = 'COL' WHERE idUsuário = :id", nativeQuery = true)

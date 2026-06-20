@@ -86,6 +86,14 @@ public class Atividade {
         this.cargaHorariaMinistrante = cargaHorariaMinistrante;
     }
 
+    public static Atividade criarAtividade(String titulo, LocalDate data_inicio, LocalTime horario_inicio, LocalDate data_termino, LocalTime horario_termino, int max_participantes, int carga_horaria_total, List<Participante> ministrantes, int carga_horaria_ministrantes) {
+        Atividade atv = new Atividade(titulo, data_inicio, horario_inicio, data_termino, horario_termino, max_participantes, carga_horaria_total, carga_horaria_ministrantes);
+        if (ministrantes != null) {
+            atv.getMinistrantes().addAll(ministrantes);
+        }
+        return atv;
+    }
+
     public Object pegarDadosAtividade(Atividade atividade) {
         return null;
     }
