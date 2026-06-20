@@ -95,11 +95,55 @@ public class Atividade {
     }
 
     public Object pegarDadosAtividade(Atividade atividade) {
-        return null;
+        java.util.Map<String, Object> dados = new java.util.HashMap<>();
+        dados.put("id", this.id);
+        dados.put("titulo", this.titulo);
+        dados.put("dataInicio", this.dataInicio);
+        dados.put("horarioInicio", this.horarioInicio);
+        dados.put("dataFim", this.dataFim);
+        dados.put("horarioFim", this.horarioFim);
+        dados.put("maxParticipantes", this.maxParticipantes);
+        dados.put("cargaHorariaTotal", this.cargaHorariaTotal);
+        dados.put("cargaHorariaMinistrante", this.cargaHorariaMinistrante);
+        
+        java.util.List<Integer> ministrantesIds = new java.util.ArrayList<>();
+        if (this.ministrantes != null) {
+            for (Usuário m : this.ministrantes) {
+                ministrantesIds.add(m.getId());
+            }
+        }
+        dados.put("ministrantes_ids", ministrantesIds);
+        
+        if (this.evento != null) {
+            dados.put("evento_id", this.evento.getId());
+        }
+        return dados;
     }
 
+    @SuppressWarnings("unchecked")
     public boolean alterarDadosAtividade(Object novosDadosAtividade) {
-        return false;
+        try {
+            java.util.Map<String, Object> req = (java.util.Map<String, Object>) novosDadosAtividade;
+            
+            if (req.get("titulo") != null) this.titulo = String.valueOf(req.get("titulo"));
+            if (req.get("data_inicio") != null) this.dataInicio = java.time.LocalDate.parse(String.valueOf(req.get("data_inicio")));
+            if (req.get("data_termino") != null) this.dataFim = java.time.LocalDate.parse(String.valueOf(req.get("data_termino")));
+            if (req.get("horario_inicio") != null) this.horarioInicio = java.time.LocalTime.parse(String.valueOf(req.get("horario_inicio")));
+            if (req.get("horario_termino") != null) this.horarioFim = java.time.LocalTime.parse(String.valueOf(req.get("horario_termino")));
+            if (req.get("max_participantes") != null) this.maxParticipantes = Integer.parseInt(String.valueOf(req.get("max_participantes")));
+            if (req.get("carga_horaria_total") != null) this.cargaHorariaTotal = Integer.parseInt(String.valueOf(req.get("carga_horaria_total")));
+            if (req.get("carga_horaria_ministrantes") != null) this.cargaHorariaMinistrante = Integer.parseInt(String.valueOf(req.get("carga_horaria_ministrantes")));
+            
+            if (req.get("novos_ministrantes") != null) {
+                this.ministrantes.clear();
+                this.ministrantes.addAll((java.util.List<Participante>) req.get("novos_ministrantes"));
+            }
+            
+            return true;
+        } catch (Exception e) {
+            System.err.println("Erro ao alterar dados da atividade: " + e.getMessage());
+            return false;
+        }
     }
 
 
