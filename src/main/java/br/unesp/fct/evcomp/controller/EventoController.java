@@ -165,13 +165,13 @@ public class EventoController {
 
     @GetMapping("/{eventoId}/detalhes")
     public ResponseEntity<?> selecionarEvento(@PathVariable Integer eventoId) {
-        Optional<Evento> eventoOpt = eventoRepository.buscarEventoPorId(eventoId);
+        Optional<Evento> eventoEncontrado = eventoRepository.buscarEventoPorId(eventoId);
 
-        if (!eventoOpt.isPresent()) {
+        if (!eventoEncontrado.isPresent()) {
             return ResponseEntity.status(404).body(Map.of("error", "Evento não encontrado."));
         }
 
-        Evento evento = eventoOpt.get();
+        Evento evento = eventoEncontrado.get();
 
         Map<String, Object> dadosEvento = evento.pegarDadosEvento();
 
@@ -219,18 +219,43 @@ public class EventoController {
         }
     }
 
+    private boolean verificarAlteracaoTitulo(String tituloEventoEncontrado, String titulo) {
+        return titulo != null && !titulo.equals(tituloEventoEncontrado);
+    }
+
     @PutMapping("/{id}")
-    public ResponseEntity<?> editarEventoWeb(@PathVariable Integer id, @RequestBody Map<String, String> req) {
+    public ResponseEntity<?> confirmarEdicao(@PathVariable Integer id, @RequestBody Map<String, String> req) {
         try {
-            LocalDate dataInicio = null;
-            LocalDate dataTermino = null;
-            if (req.get("dataInicio") != null && !req.get("dataInicio").isEmpty()) {
-                dataInicio = LocalDate.parse(req.get("dataInicio"));
+            String titulo = req.get("titulo");
+            String descricao = req.get("descricao");
+            String link = req.get("link");
+            String tipo = req.get("tipoContabilizacao");
+            LocalDate dataInicio = LocalDate.parse(req.get("dataInicio"));
+            LocalDate dataTermino = LocalDate.parse(req.get("dataTermino"));
+
+            Optional<Evento> eventoEncontrado = eventoRepository.buscarEventoPorId(id);
+            Evento evento = eventoEncontrado.get();
+            
+            if (verificarAlteracaoTitulo(evento.getTitulo(), titulo)) {
+                if (eventoRepository.verificarEventoCadastrado(titulo)) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "Já existe um evento cadastrado com este título."));
+                }
             }
-            if (req.get("dataTermino") != null && !req.get("dataTermino").isEmpty()) {
-                dataTermino = LocalDate.parse(req.get("dataTermino"));
+            
+            evento.setTitulo(titulo);
+            evento.setDataInicio(dataInicio);
+            evento.setDataFim(dataTermino);
+            evento.setDescricao(descricao);
+            evento.setLink(link);
+            evento.setTipoContabilizacao(TipoContabilizacao.valueOf(tipo));
+            
+            boolean editado = eventoRepository.salvarEvento(evento);
+            
+            if (editado) {
+                return ResponseEntity.ok(Map.of("message", "Evento editado com sucesso."));
+            } else {
+                return ResponseEntity.status(500).body(Map.of("error", "Erro ao tentar salvar o evento no banco."));
             }
-            return confirmarEdicao(id, req.get("titulo"), dataInicio, dataTermino, req.get("descricao"), req.get("link"), req.get("tipoContabilizacao"));
         } catch (Exception e) {
             System.err.println("Erro ao editar evento: " + e.getMessage());
             return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro interno no servidor ao editar o evento."));
@@ -238,41 +263,13 @@ public class EventoController {
     }
 
     @GetMapping("/buscar")
-    public ResponseEntity<?> consultarEventoWeb(@RequestParam String titulo) {
-        return confirmarConsulta(titulo);
-    }
-
-    public ResponseEntity<?> confirmarConsulta(String tituloEvento) {
+    public ResponseEntity<?> confirmarConsulta(@RequestParam String tituloEvento) {
         java.util.List<Evento> listaEventos = eventoRepository.buscarEventosPorTituloParcial(tituloEvento);
+
         if(listaEventos.isEmpty()){
             return ResponseEntity.status(404).body(Map.of("error", "Nenhum evento encontrado com este título."));
         }
-        return ResponseEntity.ok(listaEventos);
-    }
 
-    public ResponseEntity<?> confirmarEdicao(Integer id, String titulo, LocalDate dataInicio, LocalDate dataTermino, String descricao, String link, String tipo) {
-        Optional<Evento> evOpt = eventoRepository.buscarEventoPorId(id);
-        if (!evOpt.isPresent()) return ResponseEntity.status(404).body(Map.of("error", "Evento não encontrado."));
-        
-        Evento evento = evOpt.get();
-        if (titulo != null && !titulo.equals(evento.getTitulo()) && eventoRepository.verificarEventoCadastrado(titulo)) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Já existe um evento cadastrado com este título."));
-        }
-        
-        if (titulo != null) evento.setTitulo(titulo);
-        if (dataInicio != null) {
-            evento.setDataInicio(dataInicio);
-        }
-        if (dataTermino != null) {
-            evento.setDataFim(dataTermino);
-        }
-        if (descricao != null) evento.setDescricao(descricao);
-        if (link != null) evento.setLink(link);
-        if (tipo != null) {
-            try { evento.setTipoContabilizacao(TipoContabilizacao.valueOf(tipo)); } catch(Exception e) {}
-        }
-        
-        eventoRepository.save(evento);
-        return ResponseEntity.ok(evento);
+        return ResponseEntity.ok(listaEventos);
     }
 }

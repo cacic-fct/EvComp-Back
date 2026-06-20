@@ -27,6 +27,15 @@ public interface EventoRepository extends JpaRepository<Evento, Integer> {
         }
     }
 
+    default boolean salvarEvento(Evento evento) {
+        try {
+            save(evento);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     @org.springframework.data.jpa.repository.Query("SELECT e FROM Evento e WHERE e.id = :eventoId")
     Optional<Evento> buscarEventoPorId(@org.springframework.data.repository.query.Param("eventoId") Integer eventoId);
 
