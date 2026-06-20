@@ -163,7 +163,7 @@ public class EventoController {
         }
     }
 
-    @GetMapping("/{id}/detalhes-inscricao")
+    @GetMapping("/{eventoId}/detalhes")
     public ResponseEntity<?> selecionarEvento(@PathVariable Integer eventoId) {
         Optional<Evento> eventoOpt = eventoRepository.buscarEventoPorId(eventoId);
 
@@ -188,17 +188,31 @@ public class EventoController {
     public void buscarColetoresPorEvento(String eventoId) {}
 
     @PostMapping
-    public ResponseEntity<?> criarEventoWeb(@RequestBody Map<String, String> req) {
+    public ResponseEntity<?> confirmarCriacao(@RequestBody Map<String, String> req) {
         try {
-            LocalDate dataInicio = null;
-            LocalDate dataTermino = null;
-            if (req.get("dataInicio") != null && !req.get("dataInicio").isEmpty()) {
-                dataInicio = LocalDate.parse(req.get("dataInicio"));
+            String titulo = req.get("titulo");
+            String descricao = req.get("descricao");
+            String link = req.get("link");
+            String tipo = req.get("tipoContabilizacao");
+
+            LocalDate dataInicio = LocalDate.parse(req.get("dataInicio"));
+            LocalDate dataTermino = LocalDate.parse(req.get("dataTermino"));
+
+            if (eventoRepository.verificarEventoCadastrado(titulo)) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Já existe um evento cadastrado com este título."));
             }
-            if (req.get("dataTermino") != null && !req.get("dataTermino").isEmpty()) {
-                dataTermino = LocalDate.parse(req.get("dataTermino"));
+            
+            TipoContabilizacao tipoC = TipoContabilizacao.valueOf(tipo);
+            
+            Evento evento = Evento.criarEvento(titulo, dataInicio, dataTermino, descricao, link, tipoC);
+           
+            boolean eventoCriado = eventoRepository.salvarNovoEvento(evento);
+            
+            if (eventoCriado) {
+                return ResponseEntity.ok(Map.of("message", "Evento criado com sucesso."));
+            } else {
+                return ResponseEntity.status(500).body(Map.of("error", "Não foi possível criar o evento."));
             }
-            return confirmarCriacao(req.get("titulo"), dataInicio, dataTermino, req.get("descricao"), req.get("link"), req.get("tipoContabilizacao"));
         } catch (Exception e) {
             System.err.println("Erro ao criar evento: " + e.getMessage());
             return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro interno no servidor ao cadastrar o evento."));
@@ -228,25 +242,6 @@ public class EventoController {
         return confirmarConsulta(titulo);
     }
 
-    public ResponseEntity<?> confirmarCriacao(String titulo, LocalDate dataInicio, LocalDate dataTermino, String descricao, String link, String tipo) {
-        if (dataInicio == null || dataTermino == null || titulo == null || descricao == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Campos obrigatórios ausentes."));
-        }
-        if (dataTermino.isBefore(dataInicio)) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Data de término não pode ser anterior à data de início."));
-        }
-        if (eventoRepository.verificarEventoCadastrado(titulo)) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Já existe um evento cadastrado com este título."));
-        }
-        TipoContabilizacao tipoC = TipoContabilizacao.POR_ATIVIDADE;
-        if (tipo != null) {
-            try { tipoC = TipoContabilizacao.valueOf(tipo); } catch(Exception e) {}
-        }
-        Evento evento = new Evento(titulo, dataInicio, dataTermino, descricao, link, tipoC);
-        eventoRepository.save(evento);
-        return ResponseEntity.ok(evento);
-    }
-
     public ResponseEntity<?> confirmarConsulta(String tituloEvento) {
         java.util.List<Evento> listaEventos = eventoRepository.buscarEventosPorTituloParcial(tituloEvento);
         if(listaEventos.isEmpty()){
@@ -260,9 +255,6 @@ public class EventoController {
         if (!evOpt.isPresent()) return ResponseEntity.status(404).body(Map.of("error", "Evento não encontrado."));
         
         Evento evento = evOpt.get();
-        if (dataTermino != null && dataInicio != null && dataTermino.isBefore(dataInicio)) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Data de término não pode ser anterior à data de início."));
-        }
         if (titulo != null && !titulo.equals(evento.getTitulo()) && eventoRepository.verificarEventoCadastrado(titulo)) {
             return ResponseEntity.badRequest().body(Map.of("error", "Já existe um evento cadastrado com este título."));
         }

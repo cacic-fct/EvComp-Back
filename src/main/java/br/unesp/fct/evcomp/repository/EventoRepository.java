@@ -4,8 +4,8 @@ import br.unesp.fct.evcomp.domain.Evento;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
-import java.util.Date;
 import br.unesp.fct.evcomp.domain.TipoContabilizacao;
+
 
 public interface EventoRepository extends JpaRepository<Evento, Integer> {
     @org.springframework.data.jpa.repository.Query("SELECT e FROM Evento e WHERE e.titulo = :titulo")
@@ -14,8 +14,18 @@ public interface EventoRepository extends JpaRepository<Evento, Integer> {
     @org.springframework.data.jpa.repository.Query("SELECT e FROM Evento e WHERE LOWER(e.titulo) LIKE LOWER(CONCAT('%', :titulo, '%'))")
     java.util.List<Evento> buscarEventosPorTituloParcial(@org.springframework.data.repository.query.Param("titulo") String titulo);
 
-    @org.springframework.data.jpa.repository.Query("SELECT COUNT(e) > 0 FROM Evento e WHERE e.titulo = :tituloEvento")
-    boolean verificarEventoCadastrado(@org.springframework.data.repository.query.Param("tituloEvento") String tituloEvento);
+    default boolean verificarEventoCadastrado(String tituloEvento) {
+        return buscarEventoPorTitulo(tituloEvento).isPresent();
+    }
+
+    default boolean salvarNovoEvento(Evento novoEvento) {
+        try {
+            save(novoEvento);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     @org.springframework.data.jpa.repository.Query("SELECT e FROM Evento e WHERE e.id = :eventoId")
     Optional<Evento> buscarEventoPorId(@org.springframework.data.repository.query.Param("eventoId") Integer eventoId);

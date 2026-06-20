@@ -45,14 +45,7 @@ public class Evento {
     public Evento() {
     }
 
-    public Evento(String titulo, LocalDate dataInicio, LocalDate dataFim, String descricao, String link, TipoContabilizacao tipoContabilizacao) {
-        this.titulo = titulo;
-        this.dataInicio = dataInicio;
-        this.dataFim = dataFim;
-        this.descricao = descricao;
-        this.link = link;
-        this.tipoContabilizacao = tipoContabilizacao;
-    }
+
 
     public java.util.Map<String, Object> pegarDadosEvento() {
         java.util.Map<String, Object> map = new java.util.HashMap<>();
@@ -68,8 +61,17 @@ public class Evento {
         return map;
     }
 
-    public Evento criarEvento(String titulo, LocalDate dataInicio, LocalDate dataTermino, String descricao, String link) {
-        return new Evento(titulo, dataInicio, dataTermino, descricao, link, null);
+    public static Evento criarEvento(String titulo, LocalDate dataInicio, LocalDate dataTermino, String descricao, String link, TipoContabilizacao tipo) {
+        Evento evento = new Evento();
+
+        evento.setTitulo(titulo);
+        evento.setDataInicio(dataInicio);
+        evento.setDataFim(dataTermino);
+        evento.setDescricao(descricao);
+        evento.setLink(link);
+        evento.setTipoContabilizacao(tipo);
+
+        return evento;
     }
 
     public void removerAtividade(Atividade atividade) {
