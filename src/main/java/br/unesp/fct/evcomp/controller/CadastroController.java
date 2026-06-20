@@ -32,13 +32,13 @@ public class CadastroController {
 
         try {
             String senhaHash = org.mindrot.jbcrypt.BCrypt.hashpw(senha, org.mindrot.jbcrypt.BCrypt.gensalt());
-            Participante p = Participante.criarParticipante(nomeCompleto, email, senhaHash);
+            Participante novoParticipante = Participante.criarParticipante(nomeCompleto, email, senhaHash);
 
             if (ra != null && !ra.isEmpty()) {
-                p.setRA(ra);
+                novoParticipante.setRA(ra);
             }
 
-            participanteRepository.salvarNovoParticipante(p);
+            participanteRepository.salvarNovoParticipante(novoParticipante);
 
             return ResponseEntity.ok().body(Map.of("message", "Cadastro realizado com sucesso"));
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
