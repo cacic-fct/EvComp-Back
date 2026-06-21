@@ -130,24 +130,16 @@ public class EventoController {
     }
 
     @DeleteMapping("/{eventoId}/coletores/{coletorId}")
-    public ResponseEntity<?> removerColetor(@PathVariable String eventoId, @PathVariable String coletorId) {
+    public ResponseEntity<?> removerColetor(@PathVariable Integer eventoId, @PathVariable Integer coletorId) {
         try {
-            Integer evId = Integer.valueOf(eventoId);
-            Integer usuId = Integer.valueOf(coletorId);
-            
-            // Remove do banco a associação na tabela N:M
-            participanteRepository.removerColetorDoEventoNoBanco(usuId, evId);
-            
-            // Verifica se ficou sem eventos
-            int count = participanteRepository.contarEventosDoColetor(usuId);
-            if (count == 0) {
-                // Downgrade: Volta a ser Participante comum
-                participanteRepository.rebaixarParaParticipante(usuId);
-            }
-            
+            boolean coletorRemovido = participanteRepository.deletarColetor(eventoId, coletorId);
             entityManager.clear();
             
-            return ResponseEntity.ok(Map.of("message", "Coletor removido com sucesso."));
+            if (coletorRemovido) {
+                return ResponseEntity.ok(Map.of("message", "Coletor removido com sucesso."));
+            } else {
+                return ResponseEntity.status(400).body(Map.of("error", "Participante não era coletor deste evento ou a exclusão falhou."));
+            }
         } catch (Exception e) {
             System.err.println("Erro ao remover coletor: " + e.getMessage());
             return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro interno ao remover o coletor."));
