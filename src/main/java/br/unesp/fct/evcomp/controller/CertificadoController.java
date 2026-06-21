@@ -5,7 +5,7 @@ import br.unesp.fct.evcomp.domain.Certificado;
 import br.unesp.fct.evcomp.domain.Evento;
 import br.unesp.fct.evcomp.domain.Participante;
 import br.unesp.fct.evcomp.repository.AtividadeRepository;
-import br.unesp.fct.evcomp.repository.CertificadoRepository;
+
 import br.unesp.fct.evcomp.repository.EventoRepository;
 import br.unesp.fct.evcomp.repository.InscricaoRepository;
 import br.unesp.fct.evcomp.repository.ParticipanteRepository;
@@ -31,7 +31,7 @@ import java.util.Set;
 public class CertificadoController {
 
     private final CertificadoService certificadoService;
-    private final CertificadoRepository certificadoRepository;
+
     private final ParticipanteRepository participanteRepository;
     private final EventoRepository eventoRepository;
     private final AtividadeRepository atividadeRepository;
@@ -44,9 +44,8 @@ public class CertificadoController {
     private br.unesp.fct.evcomp.service.CalculadoraCargaHoraria calculadoraCargaHoraria;
 
     @Autowired
-    public CertificadoController(CertificadoService certificadoService, CertificadoRepository certificadoRepository, ParticipanteRepository participanteRepository, EventoRepository eventoRepository, AtividadeRepository atividadeRepository, InscricaoRepository inscricaoRepository) {
+    public CertificadoController(CertificadoService certificadoService, ParticipanteRepository participanteRepository, EventoRepository eventoRepository, AtividadeRepository atividadeRepository, InscricaoRepository inscricaoRepository) {
         this.certificadoService = certificadoService;
-        this.certificadoRepository = certificadoRepository;
         this.participanteRepository = participanteRepository;
         this.eventoRepository = eventoRepository;
         this.atividadeRepository = atividadeRepository;

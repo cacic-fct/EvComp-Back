@@ -111,23 +111,16 @@ public class EventoController {
     }
 
     @PostMapping("/{eventoId}/coletores/{participanteId}")
-    public ResponseEntity<?> tornarColetor(@PathVariable String eventoId, @PathVariable("participanteId") String participanteId) {
+    public ResponseEntity<?> tornarColetor(@PathVariable Integer eventoId, @PathVariable("participanteId") Integer participanteId) {
         try {
-            Integer evId = Integer.valueOf(eventoId);
-            Optional<Participante> partOpt = participanteRepository.buscarPorRa(participanteId);
-            if (!partOpt.isPresent()) {
-                return ResponseEntity.status(404).body(Map.of("error", "Participante não encontrado com este RA."));
+            boolean ehColetor = participanteRepository.verificarColetor(participanteId, eventoId);
+            
+            if (ehColetor) {
+                 return ResponseEntity.status(400).body(Map.of("error", "Participante já é coletor deste evento."));
             }
-            Participante p = partOpt.get();
-            Integer usuId = p.getId();
             
-            // Mutação Nativa: Define o participante como coletor no banco (muda tipo_usuario)
-            participanteRepository.tornarColetor(usuId);
-            // Limpa o cache para obrigar o JPA a reler o objeto como ColetorDePresenca
+            participanteRepository.atribuirPapelColetor(participanteId, eventoId);
             entityManager.clear();
-            
-            // Insere na tabela N:M
-            participanteRepository.associarColetorAoEventoNoBanco(usuId, evId);
             
             return ResponseEntity.ok(Map.of("message", "Coletor associado com sucesso."));
         } catch (Exception e) {
@@ -182,8 +175,7 @@ public class EventoController {
     }
 
 
-    public void buscarParticipantesPorEvento(String eventoId) {}
-    public void buscarColetoresPorEvento(String eventoId) {}
+
 
     @PostMapping
     public ResponseEntity<?> confirmarCriacao(@RequestBody Map<String, String> req) {

@@ -19,13 +19,22 @@ public interface ParticipanteRepository extends JpaRepository<Participante, Inte
 
     @org.springframework.data.jpa.repository.Modifying
     @org.springframework.transaction.annotation.Transactional
-    @org.springframework.data.jpa.repository.Query(value = "UPDATE usuário SET tipo_usuario = 'COL' WHERE idUsuário = :id", nativeQuery = true)
-    void tornarColetor(@org.springframework.data.repository.query.Param("id") Integer id);
+    @org.springframework.data.jpa.repository.Query(value = "UPDATE usuário SET tipo_usuario = 'COL' WHERE idUsuário = :usuarioId", nativeQuery = true)
+    void atualizarTipoUsuarioParaColetor(@org.springframework.data.repository.query.Param("usuarioId") Integer usuarioId);
 
     @org.springframework.data.jpa.repository.Modifying
     @org.springframework.transaction.annotation.Transactional
-    @org.springframework.data.jpa.repository.Query(value = "INSERT IGNORE INTO coletor_presença (idUsuário, idEvento) VALUES (:idUsuario, :idEvento)", nativeQuery = true)
-    void associarColetorAoEventoNoBanco(@org.springframework.data.repository.query.Param("idUsuario") Integer idUsuario, @org.springframework.data.repository.query.Param("idEvento") Integer idEvento);
+    @org.springframework.data.jpa.repository.Query(value = "INSERT IGNORE INTO coletor_presença (idUsuário, idEvento) VALUES (:usuarioId, :eventoId)", nativeQuery = true)
+    void associarColetorAoEvento(@org.springframework.data.repository.query.Param("usuarioId") Integer usuarioId, @org.springframework.data.repository.query.Param("eventoId") Integer eventoId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(c) > 0 FROM ColetorDePresenca c JOIN c.eventosColetados e WHERE c.id = :usuarioId AND e.id = :eventoId")
+    boolean verificarColetor(@org.springframework.data.repository.query.Param("usuarioId") Integer usuarioId, @org.springframework.data.repository.query.Param("eventoId") Integer eventoId);
+
+    @org.springframework.transaction.annotation.Transactional
+    default void atribuirPapelColetor(Integer usuarioId, Integer eventoId) {
+        atualizarTipoUsuarioParaColetor(usuarioId);
+        associarColetorAoEvento(usuarioId, eventoId);
+    }
 
     @org.springframework.data.jpa.repository.Modifying
     @org.springframework.transaction.annotation.Transactional

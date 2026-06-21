@@ -4,33 +4,20 @@ import jakarta.persistence.*;
 import java.util.Date;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "certificado")
 public class Certificado {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "idCertificado")
     private Integer id;
 
-    @Column(name = "data_emissao", nullable = false)
     private Date dataEmissao;
 
-    @Column(name = "percentual_presenca", nullable = false)
     private float percentualPresenca;
 
-    @Column(name = "tipo_certificado", nullable = false)
     private String tipoCertificado;
 
-    @Column(name = "pdf_path")
     private String pdfPath;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "idUsuário", nullable = false)
     private Usuário usuario;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "idAtividade", nullable = false)
     private Atividade atividade;
 
     public Certificado() {
