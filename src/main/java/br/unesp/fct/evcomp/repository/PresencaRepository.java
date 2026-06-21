@@ -16,8 +16,13 @@ public interface PresencaRepository extends JpaRepository<RegistroDePresenca, In
 
     @Query("SELECT p.atividade.id FROM RegistroDePresenca p WHERE p.participante.id = :participanteId AND p.presente = true")
     java.util.List<Integer> buscarAtividadesComPresencaPorParticipante(@Param("participanteId") Integer participanteId);
-
+    
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query(value = "DELETE FROM presença WHERE idAtividade = :atividadeId", nativeQuery = true)
+    void removerPresencasPorAtividade(@org.springframework.data.repository.query.Param("atividadeId") Integer atividadeId);
+  
     default int contarPresencasNoEvento(String participanteId, String eventoId) {
         return (int) contarPresencasNoEvento(Integer.valueOf(participanteId), Integer.valueOf(eventoId));
     }
+
 }

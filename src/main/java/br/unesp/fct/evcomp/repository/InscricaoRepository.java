@@ -28,6 +28,10 @@ public interface InscricaoRepository extends JpaRepository<Inscrição, Integer>
     @org.springframework.data.jpa.repository.Query("SELECT COUNT(i) FROM Inscrição i JOIN i.atividade a WHERE a.id = :atividadeId")
     int contarInscritosPorAtividadeInt(@org.springframework.data.repository.query.Param("atividadeId") Integer atividadeId);
 
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query(value = "DELETE FROM inscrição_atividade WHERE idAtividade = :atividadeId", nativeQuery = true)
+    void removerInscricoesPorAtividade(@org.springframework.data.repository.query.Param("atividadeId") Integer atividadeId);
+
     default int contarInscritosPorAtividade(String atividadeId) { 
         return contarInscritosPorAtividadeInt(Integer.valueOf(atividadeId));
     }
@@ -36,5 +40,4 @@ public interface InscricaoRepository extends JpaRepository<Inscrição, Integer>
         this.save(inscricao);
     }
 
-    default boolean buscarPorParticipanteEAtividade(String participanteId, String atividadeId) { return false; }
 }

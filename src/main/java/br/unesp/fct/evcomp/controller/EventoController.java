@@ -110,8 +110,6 @@ public class EventoController {
         return ResponseEntity.status(401).body(Map.of("error", "Sessão inválida ou expirada."));
     }
 
-    public void buscarEvento(String eventoId) {}
-
     @PostMapping("/{eventoId}/coletores/{participanteId}")
     public ResponseEntity<?> tornarColetor(@PathVariable String eventoId, @PathVariable("participanteId") String participanteId) {
         try {

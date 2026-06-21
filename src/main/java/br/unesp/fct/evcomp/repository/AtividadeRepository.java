@@ -20,8 +20,13 @@ public interface AtividadeRepository extends JpaRepository<Atividade, Integer> {
     
     @org.springframework.data.jpa.repository.Query("SELECT a FROM Atividade a JOIN a.ministrantes m WHERE m.id = :ministranteId")
     List<Atividade> buscarAtividadesPorMinistrante(@org.springframework.data.repository.query.Param("ministranteId") Integer ministranteId);
-
     
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @org.springframework.data.jpa.repository.Query("DELETE FROM Atividade a WHERE a.id = :atividadeId")
+    void removerAtividade(@org.springframework.data.repository.query.Param("atividadeId") Integer atividadeId);
+    
+
     default boolean checarAndamentoAtividade(Integer atividadeId) { 
         Optional<Atividade> atv = buscarAtividadePorId(atividadeId);
         
@@ -60,4 +65,5 @@ public interface AtividadeRepository extends JpaRepository<Atividade, Integer> {
             return false;
         }
     }
+
 }

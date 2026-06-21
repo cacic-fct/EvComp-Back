@@ -25,14 +25,16 @@ public class AtividadeController {
     private final InscricaoRepository inscricaoRepository;
     private final br.unesp.fct.evcomp.service.AtividadeService atividadeService;
     private final br.unesp.fct.evcomp.repository.ParticipanteRepository participanteRepository;
+    private final br.unesp.fct.evcomp.repository.PresencaRepository presencaRepository;
 
     @Autowired
-    public AtividadeController(AtividadeRepository atividadeRepository, EventoRepository eventoRepository, InscricaoRepository inscricaoRepository, br.unesp.fct.evcomp.service.AtividadeService atividadeService, br.unesp.fct.evcomp.repository.ParticipanteRepository participanteRepository) {
+    public AtividadeController(AtividadeRepository atividadeRepository, EventoRepository eventoRepository, InscricaoRepository inscricaoRepository, br.unesp.fct.evcomp.service.AtividadeService atividadeService, br.unesp.fct.evcomp.repository.ParticipanteRepository participanteRepository, br.unesp.fct.evcomp.repository.PresencaRepository presencaRepository) {
         this.atividadeRepository = atividadeRepository;
         this.eventoRepository = eventoRepository;
         this.inscricaoRepository = inscricaoRepository;
         this.atividadeService = atividadeService;
         this.participanteRepository = participanteRepository;
+        this.presencaRepository = presencaRepository;
     }
 
     @GetMapping
@@ -175,13 +177,27 @@ public class AtividadeController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> excluirAtividade(@PathVariable Integer id, @RequestParam(required = false) boolean confirmar) {
-        int inscritos = inscricaoRepository.contarInscritosPorAtividadeInt(id);
-        if (inscritos > 0 && !confirmar) {
-            return ResponseEntity.status(409).body(Map.of("error", "Atividade com participantes inscritos. Confirmar exclusão?"));
+    @org.springframework.transaction.annotation.Transactional
+    public ResponseEntity<?> excluirAtividade(@PathVariable("id") Integer atividadeId, @RequestParam(required = false) boolean confirmar) {
+        Optional<Atividade> atividade = atividadeRepository.buscarAtividadePorId(atividadeId);
+        
+        if (atividade.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("error", "Atividade não encontrada."));
         }
         
-        atividadeRepository.deleteById(id);
+        int inscritos = inscricaoRepository.contarInscritosPorAtividadeInt(atividadeId);
+        
+        if (inscritos > 0) {
+            if (!confirmar) {
+                return ResponseEntity.status(409).body(Map.of("error", "Atividade com participantes inscritos. Confirmar exclusão?"));
+            }
+            
+            presencaRepository.removerPresencasPorAtividade(atividadeId);
+            inscricaoRepository.removerInscricoesPorAtividade(atividadeId);
+        }
+        
+        atividadeRepository.removerAtividade(atividadeId);
+        
         return ResponseEntity.ok(Map.of("message", "Atividade excluída com sucesso."));
     }
 

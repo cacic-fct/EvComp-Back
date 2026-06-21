@@ -101,6 +101,7 @@ public class InscricaoController {
     public ResponseEntity<?> listarEventosInscritos(@RequestParam("participanteId") String participanteId) {
         try {
             List<Integer> eventosIds = inscricaoRepository.buscarEventosInscritosPorParticipante(Integer.valueOf(participanteId));
+
             return ResponseEntity.ok(Map.of("inscritos", eventosIds));
         } catch (Exception e) {
             System.err.println("Erro listarEventosInscritos: " + e.getMessage());
