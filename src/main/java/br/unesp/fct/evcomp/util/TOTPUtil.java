@@ -46,6 +46,7 @@ public class TOTPUtil {
 
     public static boolean validateTOTP(String secret, String codeToValidate, long timeMillisLeitura) {
         String generated = generateTOTP(secret, timeMillisLeitura);
+
         return generated.equals(codeToValidate);
     }
 }

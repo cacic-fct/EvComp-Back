@@ -156,14 +156,6 @@ public class Atividade {
         return inicioEste.isBefore(fimOutro) && fimEste.isAfter(inicioOutro);
     }
 
-    public boolean checarPeriodoPresenca() {
-        LocalDateTime agora = LocalDateTime.now();
-        LocalDateTime inicio = LocalDateTime.of(getDataInicio(), getHorarioInicio());
-        LocalDateTime fim = LocalDateTime.of(getDataFim(), getHorarioFim());
-        // Permite coleta de presença a partir de 10 minutos antes até o final da atividade
-        return !agora.isBefore(inicio.minusMinutes(10)) && !agora.isAfter(fim);
-    }
-
     public Integer getId() {
         return id;
     }

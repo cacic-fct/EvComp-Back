@@ -25,4 +25,15 @@ public interface PresencaRepository extends JpaRepository<RegistroDePresenca, In
         return (int) contarPresencasNoEvento(Integer.valueOf(participanteId), Integer.valueOf(eventoId));
     }
 
+    default RegistroDePresenca salvarPresenca(RegistroDePresenca presenca)
+    {
+        try {
+            save(presenca);
+
+            return presenca;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
 }

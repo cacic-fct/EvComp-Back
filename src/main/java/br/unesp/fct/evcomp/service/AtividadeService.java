@@ -26,7 +26,11 @@ public class AtividadeService {
         if (atividade == null) {
             return false;
         }
-        return atividade.checarPeriodoPresenca();
+        java.time.LocalDateTime agora = java.time.LocalDateTime.now();
+        java.time.LocalDateTime inicio = java.time.LocalDateTime.of(atividade.getDataInicio(), atividade.getHorarioInicio());
+        java.time.LocalDateTime fim = java.time.LocalDateTime.of(atividade.getDataFim(), atividade.getHorarioFim());
+        // Permite coleta de presença a partir de 10 minutos antes até o final da atividade
+        return !agora.isBefore(inicio.minusMinutes(10)) && !agora.isAfter(fim);
     }
 
     public void verificarCapacidadeMinima(Integer atividadeId, int novoMax) {

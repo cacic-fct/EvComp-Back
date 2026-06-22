@@ -42,6 +42,16 @@ public class AtividadeController {
         return ResponseEntity.ok(atividadeRepository.findAll());
     }
 
+    @GetMapping("/ativas-coletor")
+    public ResponseEntity<List<Atividade>> listarAtividadesDeEventosAtivos() {
+        List<Atividade> todas = atividadeRepository.findAll();
+        List<Atividade> ativas = todas.stream()
+            .filter(a -> a.getEvento() != null && eventoRepository.checarAndamentoEvento(a.getEvento().getId()))
+            .collect(java.util.stream.Collectors.toList());
+
+        return ResponseEntity.ok(ativas);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<?> buscarAtividade(@PathVariable Integer id) {
         Optional<Atividade> atividadeOpt = atividadeRepository.buscarAtividadePorId(id);
@@ -57,14 +67,15 @@ public class AtividadeController {
 
     @GetMapping("/{id}/selecionar")
     public ResponseEntity<?> selecionarAtividade(@PathVariable Integer id) {
-        Optional<Atividade> atividadeOpt = atividadeService.buscarAtividade(id);
+        Optional<Atividade> atividadeOpt = atividadeRepository.buscarAtividadePorId(id);
         
         if (atividadeOpt.isPresent()) {
-            Atividade atividade = atividadeOpt.get();
-            boolean periodoValido = atividadeService.checarPeriodoPresenca(atividade);
+            Atividade atividadeEncontrada = atividadeOpt.get();
+            Object dadosAtividade = atividadeEncontrada.pegarDadosAtividade(atividadeEncontrada);
+            boolean periodoValido = atividadeService.checarPeriodoPresenca(atividadeEncontrada);
             
             if (periodoValido) {
-                return ResponseEntity.ok(atividade);
+                return ResponseEntity.ok(dadosAtividade);
             } else {
                 return ResponseEntity.status(403).body(Map.of("error", "Atividade fora do período válido de registro de presença"));
             }
