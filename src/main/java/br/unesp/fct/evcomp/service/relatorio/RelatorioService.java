@@ -1,6 +1,6 @@
 package br.unesp.fct.evcomp.service.relatorio;
 
-import br.unesp.fct.evcomp.domain.Evento;
+
 import br.unesp.fct.evcomp.domain.Relatorio;
 import br.unesp.fct.evcomp.domain.TipoRelatorio;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,15 +16,10 @@ public class RelatorioService {
         this.strategyFactory = strategyFactory;
     }
 
-    public Relatorio gerarRelatorio(Object dadosEvento, TipoRelatorio tipoRelatorio) {
-        if (!(dadosEvento instanceof Evento)) {
-            throw new IllegalArgumentException("dadosEvento deve ser uma instância de Evento");
-        }
-        Evento evento = (Evento) dadosEvento;
-        
+    public Relatorio gerarRelatorio(Integer eventoId, String tituloEvento, TipoRelatorio tipoRelatorio) {
         RelatorioStrategyFactory estrategia = strategyFactory.obterEstrategia(tipoRelatorio.name());
-        Object dadosProcessados = estrategia.processarDados(evento);
-        return estrategia.gerarPDF(dadosProcessados, evento);
+        Object dadosProcessados = estrategia.processarDados(eventoId);
+        return estrategia.gerarPDF(dadosProcessados, tituloEvento);
     }
 
     public TipoRelatorio[] obterTiposRelatoriosDisponiveis() {

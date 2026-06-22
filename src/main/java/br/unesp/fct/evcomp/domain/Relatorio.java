@@ -12,16 +12,13 @@ public class Relatorio {
 
     private byte[] pdfConteudo;
 
-    private Evento evento;
-
     public Relatorio() {
     }
 
-    public Relatorio(Date dataGeracao, String tipoRelatorio, byte[] pdfConteudo, Evento evento) {
+    public Relatorio(Date dataGeracao, String tipoRelatorio, byte[] pdfConteudo) {
         this.dataGeracao = dataGeracao;
         this.tipoRelatorio = tipoRelatorio;
         this.pdfConteudo = pdfConteudo;
-        this.evento = evento;
     }
 
     public Integer getId() {
@@ -56,11 +53,5 @@ public class Relatorio {
         this.pdfConteudo = pdfConteudo;
     }
 
-    public Evento getEvento() {
-        return evento;
-    }
 
-    public void setEvento(Evento evento) {
-        this.evento = evento;
-    }
 }

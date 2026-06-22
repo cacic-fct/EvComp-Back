@@ -48,11 +48,7 @@ public interface EventoRepository extends JpaRepository<Evento, Integer> {
 
             if (evento.getDataFim() == null) return true;
 
-            if (evento.getDataInicio() != null && evento.getDataInicio().equals(evento.getDataFim())) {
-                return !java.time.LocalDate.now().isAfter(evento.getDataFim());
-            } else {
-                return evento.getDataFim().isAfter(java.time.LocalDate.now());
-            }
+            return !java.time.LocalDate.now().isAfter(evento.getDataFim());
         }
 
         return false;

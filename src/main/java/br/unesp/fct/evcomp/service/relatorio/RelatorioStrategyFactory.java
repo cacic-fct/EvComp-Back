@@ -1,6 +1,6 @@
 package br.unesp.fct.evcomp.service.relatorio;
 
-import br.unesp.fct.evcomp.domain.Evento;
+
 import br.unesp.fct.evcomp.domain.Relatorio;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -23,11 +23,11 @@ public class RelatorioStrategyFactory {
         throw new IllegalArgumentException("Tipo de relatório desconhecido: " + tipoRelatorio);
     }
 
-    public Object processarDados(Evento dadosEvento) {
+    public Object processarDados(Integer eventoId) {
         return null;
     }
 
-    public Relatorio gerarPDF(Object dadosBrutos, Evento evento) {
+    public Relatorio gerarPDF(Object dadosBrutos, String tituloEvento) {
         return null;
     }
 }
