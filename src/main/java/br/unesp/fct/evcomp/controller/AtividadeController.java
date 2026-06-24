@@ -43,10 +43,25 @@ public class AtividadeController {
     }
 
     @GetMapping("/ativas-coletor")
-    public ResponseEntity<List<Atividade>> listarAtividadesDeEventosAtivos() {
+    public ResponseEntity<?> listarAtividadesDeEventosAtivos(jakarta.servlet.http.HttpServletRequest request) {
+        Integer usuarioId = (Integer) request.getAttribute("usuarioLogadoId");
+        if (usuarioId == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "Não autenticado."));
+        }
+
+        Optional<br.unesp.fct.evcomp.domain.Participante> partOpt = participanteRepository.buscarParticipantePorId(usuarioId);
+        if (!partOpt.isPresent() || !(partOpt.get() instanceof br.unesp.fct.evcomp.domain.ColetorDePresenca)) {
+            return ResponseEntity.status(403).body(Map.of("error", "Usuário não é um coletor."));
+        }
+
+        br.unesp.fct.evcomp.domain.ColetorDePresenca coletor = (br.unesp.fct.evcomp.domain.ColetorDePresenca) partOpt.get();
+        java.util.List<br.unesp.fct.evcomp.domain.Evento> eventosColetados = coletor.getEventosColetados();
+
         List<Atividade> todas = atividadeRepository.findAll();
         List<Atividade> ativas = todas.stream()
-            .filter(a -> a.getEvento() != null && eventoRepository.checarAndamentoEvento(a.getEvento().getId()))
+            .filter(a -> a.getEvento() != null && 
+                         eventoRepository.checarAndamentoEvento(a.getEvento().getId()) &&
+                         eventosColetados.stream().anyMatch(e -> e.getId().equals(a.getEvento().getId())))
             .collect(java.util.stream.Collectors.toList());
 
         return ResponseEntity.ok(ativas);

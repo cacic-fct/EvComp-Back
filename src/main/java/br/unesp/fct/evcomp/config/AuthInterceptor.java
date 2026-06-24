@@ -69,6 +69,7 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         Usuário usuario = sessaoOpt.get().getUsuario();
+        request.setAttribute("usuarioLogadoId", usuario.getId());
 
         // Validação de Role para rotas administrativas
         if (path.startsWith("/api/relatorios") || 
