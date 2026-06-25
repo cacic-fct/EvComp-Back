@@ -1,10 +1,18 @@
 FROM eclipse-temurin:17-jdk-alpine AS builder
 WORKDIR /app
-COPY gradlew .
-COPY gradle gradle
+
+RUN apk add --no-cache bash
+
+# Instala a versão do Gradle compatível nativamente no Alpine
+RUN apk add --no-cache gradle
+
+# Copia as configurações do projeto para o container
 COPY build.gradle settings.gradle ./
 
-RUN chmod +x gradlew && ./gradlew dependencies --no-daemon || true
+# Gera o wrapper correto internamente na versão 8.5
+RUN gradle wrapper --gradle-version 8.5
+
+RUN ./gradlew dependencies --no-daemon || true
 
 COPY src src
 

@@ -39,3 +39,7 @@ services:
 
 volumes:
   evcomp_db_data:
+
+networks:
+  default:
+    name: evcomp_default
