@@ -7,16 +7,15 @@
 
 Este repositório contém o código-fonte do Backend do sistema **EvComp**, construído em **Java (Spring Boot)**. O sistema é responsável por toda a regra de negócio, gestão de usuários, eventos, emissão de certificados, controle de presenças e relatórios, além de prover o banco de dados via **MySQL**.
 
-## 🛠️ Tecnologias a serem Instaladas
+## Tecnologias a serem Instaladas
 
 Para rodar o projeto localmente da forma mais fácil e limpa possível, você só precisa ter instalado na sua máquina:
 
 - [Docker](https://www.docker.com/products/docker-desktop)
 - [Docker Compose](https://docs.docker.com/compose/install/)
 
-*(Não é necessário instalar Java, Maven, Gradle ou MySQL nativamente no seu computador, o Docker cuidará de tudo!)*
 
-## 🚀 Como Rodar o Projeto
+## Como Rodar o Projeto
 
 Este projeto utiliza containers Docker para garantir que o ambiente seja idêntico em qualquer máquina. 
 
@@ -26,18 +25,16 @@ Para ligar a API e o Banco de Dados, siga os seguintes passos:
 2. Execute o comando de inicialização do Docker Compose:
 
    ```bash
-   sudo docker compose up -d --build
+   docker compose up -d --build
    ```
-   *(No Windows, você pode rodar apenas `docker compose up -d --build` sem o `sudo`).*
 
 3. O Docker fará o download das imagens, criará o banco de dados MySQL na porta `3307` e iniciará a API Spring Boot na porta `8080`.
 4. Os dados iniciais de teste (usuários, eventos mockados) serão criados automaticamente graças ao script `init.sql` embutido.
 
-> [!WARNING]
 > **Atenção sobre a Ordem de Execução:** 
 > O Backend **DEVE** estar rodando antes que você inicie o Frontend (`EvComp-Front`). O Frontend depende da rede interna deste repositório (`evcomp_default`) para se conectar à API de forma correta!
 
-## 📂 Estrutura do Repositório
+## Estrutura do Repositório
 
 - **src/**: Código-fonte da aplicação Java (Controllers, Services, Repositories e Domains).
 - **init.sql**: Script com os dados falsos e estrutura inicial do banco de dados (SEED) usado para testes.
