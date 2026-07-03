@@ -25,12 +25,15 @@ public interface InscricaoRepository extends JpaRepository<Inscrição, Integer>
     @org.springframework.data.jpa.repository.Query("SELECT i FROM Inscrição i JOIN i.atividade a WHERE a.id = :atividadeId AND i.status = true")
     List<Inscrição> buscarInscricoesPorAtividade(@Param("atividadeId") Integer atividadeId);
 
-    default Inscrição buscarPorParticipanteEEvento(String participanteId, String eventoId) {
-        return buscarPorParticipanteEEvento(Integer.valueOf(participanteId), Integer.valueOf(eventoId)).orElse(null);
-    }
+    @org.springframework.data.jpa.repository.Query("SELECT i FROM Inscrição i JOIN i.atividade a WHERE i.participante.id = :participanteId AND a.id = :atividadeId")
+    Optional<Inscrição> buscarPorParticipanteEAtividade(@Param("participanteId") Integer participanteId, @Param("atividadeId") Integer atividadeId);
 
     @org.springframework.data.jpa.repository.Query("SELECT COUNT(i) FROM Inscrição i JOIN i.atividade a WHERE a.id = :atividadeId")
     int contarInscritosPorAtividadeInt(@org.springframework.data.repository.query.Param("atividadeId") Integer atividadeId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query(value = "DELETE FROM inscrição_atividade WHERE idAtividade = :atividadeId", nativeQuery = true)
+    void removerInscricoesPorAtividade(@org.springframework.data.repository.query.Param("atividadeId") Integer atividadeId);
 
     default int contarInscritosPorAtividade(String atividadeId) { 
         return contarInscritosPorAtividadeInt(Integer.valueOf(atividadeId));
@@ -39,6 +42,5 @@ public interface InscricaoRepository extends JpaRepository<Inscrição, Integer>
     default void salvarInscricao(Inscrição inscricao) {
         this.save(inscricao);
     }
-    
-    default boolean buscarPorParticipanteEAtividade(String participanteId, String atividadeId) { return false; }
+
 }

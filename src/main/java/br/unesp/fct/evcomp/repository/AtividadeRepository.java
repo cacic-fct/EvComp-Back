@@ -8,33 +8,43 @@ import java.util.Optional;
 public interface AtividadeRepository extends JpaRepository<Atividade, Integer> {
     @org.springframework.data.jpa.repository.Query("SELECT a FROM Atividade a WHERE a.titulo = :titulo AND a.evento.id = :eventoId")
     Optional<Atividade> buscarAtividadePorTitulo(@org.springframework.data.repository.query.Param("titulo") String titulo, @org.springframework.data.repository.query.Param("eventoId") Integer eventoId);
+   
     @org.springframework.data.jpa.repository.Query("SELECT a FROM Atividade a WHERE a.evento.id = :eventoId")
     List<Atividade> buscarAtividadesPorEvento(@org.springframework.data.repository.query.Param("eventoId") Integer eventoId);
 
-    @org.springframework.data.jpa.repository.Query("SELECT a FROM Atividade a WHERE a.titulo = :titulo AND a.evento.id = :eventoId")
-    Optional<Atividade> buscarAtividadePorTituloEEvento(@org.springframework.data.repository.query.Param("titulo") String titulo, @org.springframework.data.repository.query.Param("eventoId") Integer eventoId);
+    @org.springframework.data.jpa.repository.Query("SELECT a.maxParticipantes - (SELECT COUNT(i) FROM Inscrição i JOIN i.atividade atv WHERE atv.id = a.id AND i.status = true) FROM Atividade a WHERE a.id = :atividadeId")
+    Integer consultarVagasDisponiveis(@org.springframework.data.repository.query.Param("atividadeId") Integer atividadeId);
+    
+    @org.springframework.data.jpa.repository.Query("SELECT a FROM Atividade a WHERE a.id = :atividadeId")
+    Optional<Atividade> buscarAtividadePorId(@org.springframework.data.repository.query.Param("atividadeId") Integer atividadeId);
+    
+    @org.springframework.data.jpa.repository.Query("SELECT a FROM Atividade a JOIN a.ministrantes m WHERE m.id = :ministranteId")
+    List<Atividade> buscarAtividadesPorMinistrante(@org.springframework.data.repository.query.Param("ministranteId") Integer ministranteId);
+    
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @org.springframework.data.jpa.repository.Query("DELETE FROM Atividade a WHERE a.id = :atividadeId")
+    void removerAtividade(@org.springframework.data.repository.query.Param("atividadeId") Integer atividadeId);
+    
 
-    @org.springframework.data.jpa.repository.Query("SELECT a FROM Atividade a JOIN a.ministrantes m WHERE m.id = :usuarioId")
-    List<Atividade> buscarAtividadesPorMinistrante(@org.springframework.data.repository.query.Param("usuarioId") Integer usuarioId);
-
-    default Atividade verificarAtividadeCadastrada(String tituloAtividade, Integer eventoId) { 
-        return buscarAtividadePorTituloEEvento(tituloAtividade, eventoId).orElse(null);
-    }
-
-    default Atividade buscarAtividadePorId(String atividadeId) { return null; }
-    default void removerAtividade(String atividadeId) { }
-    default Atividade buscarAtividadesPorEvento(String eventoId) { return null; }
-    default int consultarVagasDisponiveis(String atividadeId) { return 0; }
-    default Atividade buscarAtividadesPorParticipante(String participanteId) { return null; }
-    default boolean checarAndamentoAtividade(String atividadeId) { 
-        Optional<Atividade> atv = findById(Integer.valueOf(atividadeId));
+    default boolean checarAndamentoAtividade(Integer atividadeId) { 
+        Optional<Atividade> atv = buscarAtividadePorId(atividadeId);
+        
         if (atv.isPresent()) {
             Atividade atividade = atv.get();
+            
             if (atividade.getDataFim() == null) return true;
-            return !java.time.LocalDate.now().isAfter(atividade.getDataFim());
+            
+            if (atividade.getDataInicio() != null && atividade.getDataInicio().equals(atividade.getDataFim())) {
+                return !java.time.LocalDate.now().isAfter(atividade.getDataFim());
+            } else {
+                return atividade.getDataFim().isAfter(java.time.LocalDate.now());
+            }
         }
+        
         return false;
     }
+    
     default int buscarCargaHorariaAtividade(Integer atividadeId) { 
         return findById(atividadeId).map(Atividade::getCargaHorariaTotal).orElse(0); 
     }
@@ -43,6 +53,17 @@ public interface AtividadeRepository extends JpaRepository<Atividade, Integer> {
         return findById(atividadeId).map(a -> a.getEvento().getTipoContabilizacao()).orElse(null);
     }
     
-    default Atividade salvarAtividade(Atividade atividade) { return null; }
-    default Atividade buscarAtividadePorTitulo(String tituloAtividade) { return null; }
+    default Atividade verificarAtividadeCadastrada(String titulo, Integer eventoId) { 
+        return buscarAtividadePorTitulo(titulo, eventoId).orElse(null);
+    }
+
+    default boolean salvarAtividade(Atividade atividade) {
+        try {
+            save(atividade);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
 }

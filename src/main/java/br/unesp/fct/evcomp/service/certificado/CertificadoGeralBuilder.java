@@ -56,7 +56,7 @@ public class CertificadoGeralBuilder implements CertificadoBuilder {
             byte[] bdata = FileCopyUtils.copyToByteArray(in);
             String html = new String(bdata, StandardCharsets.UTF_8);
 
-            html = html.replace("$nomeParticipante", participante.getNome().toUpperCase());
+            html = html.replace("$nomeParticipante", participante.getNomeCompleto().toUpperCase());
             html = html.replace("$nomeEventoOuAtividade", evento.getTitulo());
             html = html.replace("$eventoOUatividade", "do evento");
             html = html.replace("$nomeEvento", evento.getTitulo());

@@ -18,6 +18,7 @@ public class SistemaEmail {
         try {
             RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
+
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setBearerAuth(RESEND_API_KEY);
 
@@ -31,13 +32,16 @@ public class SistemaEmail {
                                  "</div>";
 
             Map<String, Object> requestBody = new HashMap<>();
+
             requestBody.put("from", "EvComp <no-reply@ciriaco.dev>");
             requestBody.put("to", new String[]{email});
             requestBody.put("subject", "Recuperação de Senha - EvComp");
             requestBody.put("html", htmlContent);
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
             restTemplate.postForEntity("https://api.resend.com/emails", entity, String.class);
+
         } catch (Exception e) {
             System.err.println("Erro ao enviar email: " + e.getMessage());
         }

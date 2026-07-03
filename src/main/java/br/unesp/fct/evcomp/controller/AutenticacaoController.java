@@ -2,17 +2,16 @@ package br.unesp.fct.evcomp.controller;
 
 import br.unesp.fct.evcomp.domain.Sessao;
 
-import br.unesp.fct.evcomp.domain.Administrador;
-import br.unesp.fct.evcomp.domain.Participante;
 import br.unesp.fct.evcomp.repository.SessaoRepository;
 import br.unesp.fct.evcomp.repository.UsuarioRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.time.LocalDateTime;
+
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
+
 
 @RestController
 @RequestMapping("/api/auth")
@@ -32,6 +31,7 @@ public class AutenticacaoController {
     public ResponseEntity<?> login(@RequestBody Map<String, String> payload) {
         String email = payload.get("email");
         String senha = payload.get("senha");
+
         return confirmarLogin(email, senha);
     }
 
@@ -51,18 +51,24 @@ public class AutenticacaoController {
                 boolean sessaoIniciada = novaSessao.iniciarSessao(usuarioExiste);
                 
                 if (sessaoIniciada) {
-                    sessaoRepository.save(novaSessao);
-                    boolean isColetor = false;
-                    if (usuarioExiste instanceof br.unesp.fct.evcomp.domain.ColetorDePresenca) {
-                         isColetor = !((br.unesp.fct.evcomp.domain.ColetorDePresenca) usuarioExiste).getEventosColetados().isEmpty();
+                    boolean sessaoSalva = sessaoRepository.salvarNovaSessao(novaSessao);
+                    
+                    if (sessaoSalva) {
+                        boolean isColetor = false;
+
+                        // Não basta apenas ser coletor, o usuário deve ser coletor de algum evento.
+                        if (usuarioExiste instanceof br.unesp.fct.evcomp.domain.ColetorDePresenca) {
+                             isColetor = !((br.unesp.fct.evcomp.domain.ColetorDePresenca) usuarioExiste).getEventosColetados().isEmpty();
+                        }
+
+                        return ResponseEntity.ok(Map.of(
+                            "message", "Login bem-sucedido", 
+                            "nome", usuarioExiste.getNomeCompleto(), 
+                            "role", usuarioExiste.getRole(),
+                            "isColetor", String.valueOf(isColetor),
+                            "token", novaSessao.getToken()
+                        ));
                     }
-                    return ResponseEntity.ok(Map.of(
-                        "message", "Login bem-sucedido", 
-                        "nome", usuarioExiste.getNome(), 
-                        "role", usuarioExiste.getRole(),
-                        "isColetor", String.valueOf(isColetor),
-                        "token", novaSessao.getToken()
-                    ));
                 }
             }
         }
@@ -85,20 +91,19 @@ public class AutenticacaoController {
     }
 
     public boolean encerrarSessao(String token) {
-        Optional<Sessao> sessaoOpt = sessaoRepository.buscarSessaoPorToken(token);
-        if (sessaoOpt.isPresent()) {
-            Sessao sessao = sessaoOpt.get();
+        Optional<Sessao> sessaoEncontrada = sessaoRepository.buscarSessaoPorToken(token);
+
+        if (sessaoEncontrada.isPresent()) {
+            Sessao sessao = sessaoEncontrada.get();
             sessao.invalidarSessao();
-            sessaoRepository.save(sessao);
-            removerDadosAutenticacao();
+            sessaoRepository.salvarSessaoInvalidada(sessao);
+
             return true;
         }
+
         return false;
     }
 
-    public void removerDadosAutenticacao() {
-        // Lógica adicional de remoção de dados caso necessário (limpar caches, etc.)
-    }
 
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(@RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -112,17 +117,23 @@ public class AutenticacaoController {
         if (sessaoOpt.isPresent() && sessaoOpt.get().isAtiva()) {
             br.unesp.fct.evcomp.domain.Usuário user = sessaoOpt.get().getUsuario();
             Map<String, String> userData = new java.util.HashMap<>();
+
             userData.put("id", String.valueOf(user.getId()));
-            userData.put("nome", user.getNome());
+            userData.put("nome", user.getNomeCompleto());
             userData.put("email", user.getEmail());
             userData.put("role", user.getRole());
+
             if (user instanceof br.unesp.fct.evcomp.domain.Participante) {
                 String ra = ((br.unesp.fct.evcomp.domain.Participante) user).getRA();
+
                 userData.put("ra", ra != null ? ra : "");
+
                 boolean isColetor = false;
+
                 if (user instanceof br.unesp.fct.evcomp.domain.ColetorDePresenca) {
                     isColetor = !((br.unesp.fct.evcomp.domain.ColetorDePresenca) user).getEventosColetados().isEmpty();
                 }
+
                 userData.put("isColetor", String.valueOf(isColetor));
             } else {
                 userData.put("isColetor", "false");

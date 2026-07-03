@@ -45,21 +45,33 @@ public class Evento {
     public Evento() {
     }
 
-    public Evento(String titulo, LocalDate dataInicio, LocalDate dataFim, String descricao, String link, TipoContabilizacao tipoContabilizacao) {
-        this.titulo = titulo;
-        this.dataInicio = dataInicio;
-        this.dataFim = dataFim;
-        this.descricao = descricao;
-        this.link = link;
-        this.tipoContabilizacao = tipoContabilizacao;
+
+
+    public java.util.Map<String, Object> pegarDadosEvento() {
+        java.util.Map<String, Object> map = new java.util.HashMap<>();
+    
+        map.put("id", this.id);
+        map.put("titulo", this.titulo);
+        map.put("dataInicio", this.dataInicio);
+        map.put("dataFim", this.dataFim);
+        map.put("descricao", this.descricao);
+        map.put("link", this.link);
+        map.put("tipoContabilizacao", this.tipoContabilizacao);
+    
+        return map;
     }
 
-    public Object pegarDadosEvento(Evento evento) {
-        return null;
-    }
+    public static Evento criarEvento(String titulo, LocalDate dataInicio, LocalDate dataTermino, String descricao, String link, TipoContabilizacao tipo) {
+        Evento evento = new Evento();
 
-    public Evento criarEvento(String titulo, LocalDate dataInicio, LocalDate dataTermino, String descricao, String link) {
-        return new Evento(titulo, dataInicio, dataTermino, descricao, link, null);
+        evento.setTitulo(titulo);
+        evento.setDataInicio(dataInicio);
+        evento.setDataFim(dataTermino);
+        evento.setDescricao(descricao);
+        evento.setLink(link);
+        evento.setTipoContabilizacao(tipo);
+
+        return evento;
     }
 
     public void removerAtividade(Atividade atividade) {

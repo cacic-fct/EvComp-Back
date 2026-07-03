@@ -19,6 +19,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                     "/api/auth/**", 
                     "/api/usuarios/cadastro",
+                    "/api/redefinicao-senha/**",
                     "/api/error"
                 );
     }

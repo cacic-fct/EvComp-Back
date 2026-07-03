@@ -8,9 +8,9 @@ public interface UsuarioRepository extends JpaRepository<Usuário, Integer> {
     @org.springframework.data.jpa.repository.Query("SELECT u FROM Usuário u WHERE u.email = :email")
     Optional<Usuário> buscarUsuarioPorEmail(@org.springframework.data.repository.query.Param("email") String email);
 
-
-    @org.springframework.data.jpa.repository.Query("SELECT COUNT(u) > 0 FROM Usuário u WHERE u.email = :email")
-    boolean validarEmailCadastrado(@org.springframework.data.repository.query.Param("email") String email);
+    default Optional<Usuário> validarEmailCadastrado(String email) {
+        return buscarUsuarioPorEmail(email);
+    }
 
     @org.springframework.data.jpa.repository.Modifying
     @org.springframework.transaction.annotation.Transactional
