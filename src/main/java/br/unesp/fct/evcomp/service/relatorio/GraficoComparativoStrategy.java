@@ -1,6 +1,6 @@
 package br.unesp.fct.evcomp.service.relatorio;
 
-import br.unesp.fct.evcomp.domain.Evento;
+
 import br.unesp.fct.evcomp.domain.Participante;
 import br.unesp.fct.evcomp.domain.Relatorio;
 import br.unesp.fct.evcomp.repository.InscricaoRepository;
@@ -31,8 +31,8 @@ public class GraficoComparativoStrategy extends RelatorioStrategyFactory {
     }
 
     @Override
-    public Object processarDados(Evento dadosEvento) {
-        List<Participante> participantes = inscricaoRepository.buscarParticipantesPorEvento(dadosEvento.getId());
+    public Object processarDados(Integer eventoId) {
+        List<Participante> participantes = inscricaoRepository.buscarParticipantesPorEvento(eventoId);
         
         long internos = 0;
         long externos = 0;
@@ -54,7 +54,7 @@ public class GraficoComparativoStrategy extends RelatorioStrategyFactory {
 
     @Override
     @SuppressWarnings("unchecked")
-    public Relatorio gerarPDF(Object dadosBrutos, Evento evento) {
+    public Relatorio gerarPDF(Object dadosBrutos, String tituloEvento) {
         Map<String, Long> counts = (Map<String, Long>) dadosBrutos;
         long internos = counts.getOrDefault("internos", 0L);
         long externos = counts.getOrDefault("externos", 0L);
@@ -71,7 +71,7 @@ public class GraficoComparativoStrategy extends RelatorioStrategyFactory {
             byte[] bdata = FileCopyUtils.copyToByteArray(in);
             String html = new String(bdata, StandardCharsets.UTF_8);
 
-            html = html.replace("$nomeEvento", evento.getTitulo());
+            html = html.replace("$nomeEvento", tituloEvento);
             html = html.replace("$dataGeracao", LocalDateTime.now().toString());
 
             html = html.replace("$qtdInternos", String.valueOf(internos));
@@ -90,7 +90,7 @@ public class GraficoComparativoStrategy extends RelatorioStrategyFactory {
             html = html.replace("$wExterno", externoBlocks + "%");
 
             byte[] pdfBytes = pdfGenerator.gerarPDF(html);
-            return new Relatorio(new java.util.Date(), "COMPARATIVO_INTERNOS_EXTERNOS", pdfBytes, evento);
+            return new Relatorio(new java.util.Date(), "COMPARATIVO_INTERNOS_EXTERNOS", pdfBytes);
         } catch (Exception e) {
             throw new RuntimeException("Falha ao gerar PDF do relatório comparativo", e);
         }

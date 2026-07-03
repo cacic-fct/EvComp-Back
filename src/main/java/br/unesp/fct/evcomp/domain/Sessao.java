@@ -34,8 +34,10 @@ public class Sessao {
             this.dataExpiracao = LocalDateTime.now().plusHours(2);
             this.ativa = true;
             this.usuario = usuarioExiste;
+
             return true;
         }
+
         return false;
     }
 
