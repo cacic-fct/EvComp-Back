@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -40,15 +41,11 @@ public class PresencaController {
 
     @Transactional
     @PostMapping("/registrar")
-    public ResponseEntity<?> registrarPresenca(@RequestBody Map<String, Object> req) {
+    public ResponseEntity<?> registrarPresenca(@Valid @RequestBody br.unesp.fct.evcomp.dto.PresencaRequestDTO req) {
         try {
-            if (!req.containsKey("atividadeId") || !req.containsKey("codigoParticipante") || !req.containsKey("timestampLido")) {
-                return exibirMensagemErro("Formato inválido. 'atividadeId', 'codigoParticipante' e 'timestampLido' são obrigatórios.", 400);
-            }
-
-            Integer atividadeId = Integer.parseInt(String.valueOf(req.get("atividadeId")));
-            String codigoParticipante = String.valueOf(req.get("codigoParticipante"));
-            long timestampLido = Long.parseLong(String.valueOf(req.get("timestampLido")));
+            Integer atividadeId = req.getAtividadeId();
+            String codigoParticipante = req.getCodigoParticipante();
+            long timestampLido = req.getTimestampLido();
 
             long horaAtual = System.currentTimeMillis();
             if (Math.abs(horaAtual - timestampLido) > (30 * 60 * 1000)) {
@@ -73,7 +70,6 @@ public class PresencaController {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
             return exibirMensagemErro("Erro interno no servidor ao processar o registro de presença.", 500);
         }
     }

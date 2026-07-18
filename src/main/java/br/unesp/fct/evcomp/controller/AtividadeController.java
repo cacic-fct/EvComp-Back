@@ -143,7 +143,6 @@ public class AtividadeController {
                 return ResponseEntity.status(500).body(Map.of("error", "Erro interno ao salvar atividade."));
             }
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro interno no servidor."));
         }
     }
@@ -197,7 +196,6 @@ public class AtividadeController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro interno no servidor ao editar a atividade."));
         }
     }

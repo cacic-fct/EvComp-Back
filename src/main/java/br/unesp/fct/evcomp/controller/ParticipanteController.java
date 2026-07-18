@@ -1,6 +1,7 @@
 package br.unesp.fct.evcomp.controller;
 
 import br.unesp.fct.evcomp.domain.Participante;
+import br.unesp.fct.evcomp.dto.ParticipanteResponseDTO;
 import br.unesp.fct.evcomp.repository.ParticipanteRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,16 +31,27 @@ public class ParticipanteController {
             return ResponseEntity.status(404).body(Map.of("error", "Participante não encontrado"));
         }
 
-        return ResponseEntity.ok(participante);
+        return ResponseEntity.ok(ParticipanteResponseDTO.fromEntity(participante));
     }
 
     @GetMapping
-    public ResponseEntity<List<Participante>> listarParticipantes() {
-        return ResponseEntity.ok(participanteRepository.findAll());
+    public ResponseEntity<List<ParticipanteResponseDTO>> listarParticipantes() {
+        List<ParticipanteResponseDTO> dtos = participanteRepository.findAll().stream()
+            .map(p -> ParticipanteResponseDTO.fromEntity((Participante) p))
+            .toList();
+        return ResponseEntity.ok(dtos);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> editarParticipante(@PathVariable("id") Integer participanteId, @RequestBody Map<String, String> body) {
+    public ResponseEntity<?> editarParticipante(@PathVariable("id") Integer participanteId, @RequestBody Map<String, String> body, jakarta.servlet.http.HttpServletRequest request) {
+        // Proteção contra IDOR: só o próprio usuário ou um ADMIN pode editar seus dados
+        Integer usuarioLogadoId = (Integer) request.getAttribute("usuarioLogadoId");
+        String usuarioLogadoRole = (String) request.getAttribute("usuarioLogadoRole");
+
+        if (!"ADMIN".equals(usuarioLogadoRole) && !participanteId.equals(usuarioLogadoId)) {
+            return ResponseEntity.status(403).body(Map.of("error", "Acesso negado. Você só pode editar seus próprios dados."));
+        }
+
         String nomeCompleto = body.get("nome"); // Mantém 'nome' para compatibilidade com o frontend
         String ra = body.get("ra");
         

@@ -11,6 +11,7 @@ import br.unesp.fct.evcomp.repository.ParticipanteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -37,15 +38,22 @@ public class InscricaoController {
     }
 
     @PostMapping
-    public ResponseEntity<?> inscreverParticipanteWeb(@RequestBody Map<String, Object> req) {
+    public ResponseEntity<?> inscreverParticipanteWeb(@Valid @RequestBody br.unesp.fct.evcomp.dto.InscricaoRequestDTO req, jakarta.servlet.http.HttpServletRequest request) {
         try {
-            Integer participanteId = Integer.valueOf(String.valueOf(req.get("participanteId")));
-            Integer eventoId = Integer.valueOf(String.valueOf(req.get("eventoId")));
-            List<Integer> atividades = (List<Integer>) req.get("atividadeIds");
+            Integer usuarioLogadoId = (Integer) request.getAttribute("usuarioLogadoId");
+            String usuarioLogadoRole = (String) request.getAttribute("usuarioLogadoRole");
+            
+            Integer participanteId = req.getParticipanteId();
+
+            if (!"ADMIN".equals(usuarioLogadoRole) && !participanteId.equals(usuarioLogadoId)) {
+                return ResponseEntity.status(403).body(Map.of("error", "Você só pode realizar inscrições para a sua própria conta."));
+            }
+
+            Integer eventoId = req.getEventoId();
+            List<Integer> atividades = req.getAtividadeIds();
 
             return inscreverParticipante(participanteId, eventoId, atividades);
         } catch (Exception e) {
-            System.err.println("Erro processar inscricao: " + e.getMessage());
             return ResponseEntity.badRequest().body(Map.of("error", "Erro interno ao processar a inscrição. Tente novamente."));
         }
     }
@@ -98,24 +106,38 @@ public class InscricaoController {
     }
 
     @GetMapping("/minhas")
-    public ResponseEntity<?> listarEventosInscritos(@RequestParam("participanteId") String participanteId) {
+    public ResponseEntity<?> listarEventosInscritos(@RequestParam("participanteId") String pId, jakarta.servlet.http.HttpServletRequest request) {
         try {
-            List<Integer> eventosIds = inscricaoRepository.buscarEventosInscritosPorParticipante(Integer.valueOf(participanteId));
+            Integer participanteId = Integer.valueOf(pId);
+            Integer usuarioLogadoId = (Integer) request.getAttribute("usuarioLogadoId");
+            String usuarioLogadoRole = (String) request.getAttribute("usuarioLogadoRole");
+
+            if (!"ADMIN".equals(usuarioLogadoRole) && !participanteId.equals(usuarioLogadoId)) {
+                return ResponseEntity.status(403).body(Map.of("error", "Você só pode visualizar suas próprias inscrições."));
+            }
+
+            List<Integer> eventosIds = inscricaoRepository.buscarEventosInscritosPorParticipante(participanteId);
 
             return ResponseEntity.ok(Map.of("inscritos", eventosIds));
         } catch (Exception e) {
-            System.err.println("Erro listarEventosInscritos: " + e.getMessage());
             return ResponseEntity.badRequest().body(Map.of("error", "Ocorreu um erro ao listar os eventos inscritos."));
         }
     }
 
     @GetMapping("/detalhes")
-    public ResponseEntity<?> listarInscricoesDetalhadas(@RequestParam("participanteId") String participanteId) {
+    public ResponseEntity<?> listarInscricoesDetalhadas(@RequestParam("participanteId") String pId, jakarta.servlet.http.HttpServletRequest request) {
         try {
-            List<br.unesp.fct.evcomp.domain.Inscrição> inscricoes = inscricaoRepository.buscarInscricoesAtivasPorParticipante(Integer.valueOf(participanteId));
+            Integer participanteId = Integer.valueOf(pId);
+            Integer usuarioLogadoId = (Integer) request.getAttribute("usuarioLogadoId");
+            String usuarioLogadoRole = (String) request.getAttribute("usuarioLogadoRole");
+
+            if (!"ADMIN".equals(usuarioLogadoRole) && !participanteId.equals(usuarioLogadoId)) {
+                return ResponseEntity.status(403).body(Map.of("error", "Você só pode visualizar os detalhes das suas próprias inscrições."));
+            }
+
+            List<br.unesp.fct.evcomp.domain.Inscrição> inscricoes = inscricaoRepository.buscarInscricoesAtivasPorParticipante(participanteId);
             return ResponseEntity.ok(inscricoes);
         } catch (Exception e) {
-            System.err.println("Erro listarInscricoesDetalhadas: " + e.getMessage());
             return ResponseEntity.badRequest().body(Map.of("error", "Ocorreu um erro ao carregar os detalhes de inscrições."));
         }
     }

@@ -43,7 +43,7 @@ public class SistemaEmail {
             restTemplate.postForEntity("https://api.resend.com/emails", entity, String.class);
 
         } catch (Exception e) {
-            System.err.println("Erro ao enviar email: " + e.getMessage());
+            // Erro silenciado intencionalmente para não vazar detalhes da integração com o serviço de email.
         }
     }
 }

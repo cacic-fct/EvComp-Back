@@ -53,7 +53,14 @@ public class CertificadoController {
     }
 
     @GetMapping("/disponiveis/{participanteId}")
-    public ResponseEntity<?> solicitarDadosCertificados(@PathVariable Integer participanteId) {
+    public ResponseEntity<?> solicitarDadosCertificados(@PathVariable Integer participanteId, jakarta.servlet.http.HttpServletRequest request) {
+        Integer usuarioLogadoId = (Integer) request.getAttribute("usuarioLogadoId");
+        String usuarioLogadoRole = (String) request.getAttribute("usuarioLogadoRole");
+
+        if (!"ADMIN".equals(usuarioLogadoRole) && !participanteId.equals(usuarioLogadoId)) {
+            return ResponseEntity.status(403).body(Map.of("error", "Você só pode visualizar seus próprios certificados."));
+        }
+
         List<br.unesp.fct.evcomp.domain.Inscrição> inscricoes = inscricaoRepository.buscarInscricoesAtivasPorParticipante(participanteId);
         List<Atividade> atividadesMinistradas = atividadeRepository.buscarAtividadesPorMinistrante(participanteId);
         
@@ -107,9 +114,17 @@ public class CertificadoController {
     }
 
     @PostMapping("/selecionar")
-    public ResponseEntity<?> selecionarEventoOuAtividade(@RequestBody Map<String, Object> payload) {
+    public ResponseEntity<?> selecionarEventoOuAtividade(@RequestBody Map<String, Object> payload, jakarta.servlet.http.HttpServletRequest request) {
         try {
             Integer participanteId = Integer.valueOf(payload.get("participanteId").toString());
+            
+            Integer usuarioLogadoId = (Integer) request.getAttribute("usuarioLogadoId");
+            String usuarioLogadoRole = (String) request.getAttribute("usuarioLogadoRole");
+
+            if (!"ADMIN".equals(usuarioLogadoRole) && !participanteId.equals(usuarioLogadoId)) {
+                return ResponseEntity.status(403).body(Map.of("error", "Você só pode solicitar a emissão dos seus próprios certificados."));
+            }
+
             String tipo = payload.get("tipo").toString();
             Integer alvoId = Integer.valueOf(payload.get("alvoId").toString());
 
@@ -153,7 +168,6 @@ public class CertificadoController {
             return ResponseEntity.ok(Map.of("liberado", true, "motivo", "Liberado"));
 
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.internalServerError().body(Map.of("error", "Erro ao selecionar certificado."));
         }
     }
@@ -198,7 +212,6 @@ public class CertificadoController {
             return ResponseEntity.ok().headers(headers).body(pdfBytes);
 
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.internalServerError().body(Map.of("error", "Ocorreu um erro interno ao processar a emissão do certificado. Tente novamente mais tarde."));
         }
     }

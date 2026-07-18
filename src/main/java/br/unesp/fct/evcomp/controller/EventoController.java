@@ -3,10 +3,13 @@ package br.unesp.fct.evcomp.controller;
 import br.unesp.fct.evcomp.domain.Evento;
 import br.unesp.fct.evcomp.domain.Participante;
 import br.unesp.fct.evcomp.domain.TipoContabilizacao;
+import br.unesp.fct.evcomp.dto.EventoRequestDTO;
+import br.unesp.fct.evcomp.dto.ParticipanteResponseDTO;
 import br.unesp.fct.evcomp.repository.EventoRepository;
 import br.unesp.fct.evcomp.repository.ParticipanteRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +25,6 @@ public class EventoController {
 
     private final EventoRepository eventoRepository;
     private final ParticipanteRepository participanteRepository;
-    private final br.unesp.fct.evcomp.repository.SessaoRepository sessaoRepository;
     private final br.unesp.fct.evcomp.repository.InscricaoRepository inscricaoRepository;
     
     @Autowired
@@ -32,10 +34,9 @@ public class EventoController {
     private EntityManager entityManager;
 
     @Autowired
-    public EventoController(EventoRepository eventoRepository, ParticipanteRepository participanteRepository, br.unesp.fct.evcomp.repository.SessaoRepository sessaoRepository, br.unesp.fct.evcomp.repository.InscricaoRepository inscricaoRepository) {
+    public EventoController(EventoRepository eventoRepository, ParticipanteRepository participanteRepository, br.unesp.fct.evcomp.repository.InscricaoRepository inscricaoRepository) {
         this.eventoRepository = eventoRepository;
         this.participanteRepository = participanteRepository;
-        this.sessaoRepository = sessaoRepository;
         this.inscricaoRepository = inscricaoRepository;
     }
 
@@ -55,22 +56,23 @@ public class EventoController {
     }
 
     @GetMapping("/{id}/participantes")
-    public ResponseEntity<List<Participante>> listarParticipantesDoEvento(@PathVariable Integer id) {
+    public ResponseEntity<List<ParticipanteResponseDTO>> listarParticipantesDoEvento(@PathVariable Integer id) {
         List<Participante> participantes = inscricaoRepository.buscarParticipantesPorEvento(id);
-
-        return ResponseEntity.ok(participantes);
+        List<ParticipanteResponseDTO> dtos = participantes.stream()
+            .map(ParticipanteResponseDTO::fromEntity)
+            .toList();
+        return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/coletor")
     public ResponseEntity<?> listarEventosDoColetor(jakarta.servlet.http.HttpServletRequest request) {
-        Integer usuarioId = (Integer) request.getAttribute("usuarioLogadoId");
-        
-        if (usuarioId == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "Não autenticado."));
+        Integer usuarioLogadoId = (Integer) request.getAttribute("usuarioLogadoId");
+
+        if (usuarioLogadoId == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "Usuário não autenticado."));
         }
-        
-        Optional<Participante> partOpt = participanteRepository.buscarParticipantePorId(usuarioId);
-        
+
+        Optional<Participante> partOpt = participanteRepository.buscarParticipantePorId(usuarioLogadoId);
         if (partOpt.isPresent() && partOpt.get() instanceof br.unesp.fct.evcomp.domain.ColetorDePresenca) {
             br.unesp.fct.evcomp.domain.ColetorDePresenca coletor = (br.unesp.fct.evcomp.domain.ColetorDePresenca) partOpt.get();
             List<Evento> eventosColetados = coletor.getEventosColetados();
@@ -102,7 +104,6 @@ public class EventoController {
             
             return ResponseEntity.ok(Map.of("message", "Coletor associado com sucesso."));
         } catch (Exception e) {
-            System.err.println("Erro ao associar coletor: " + e.getMessage());
             return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro interno no servidor ao associar o coletor."));
         }
     }
@@ -119,7 +120,6 @@ public class EventoController {
                 return ResponseEntity.status(400).body(Map.of("error", "Participante não era coletor deste evento ou a exclusão falhou."));
             }
         } catch (Exception e) {
-            System.err.println("Erro ao remover coletor: " + e.getMessage());
             return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro interno ao remover o coletor."));
         }
     }
@@ -148,15 +148,15 @@ public class EventoController {
 
 
     @PostMapping
-    public ResponseEntity<?> confirmarCriacao(@RequestBody Map<String, String> req) {
+    public ResponseEntity<?> confirmarCriacao(@Valid @RequestBody EventoRequestDTO req) {
         try {
-            String titulo = req.get("titulo");
-            String descricao = req.get("descricao");
-            String link = req.get("link");
-            String tipo = req.get("tipoContabilizacao");
+            String titulo = req.getTitulo();
+            String descricao = req.getDescricao();
+            String link = req.getLink();
+            String tipo = req.getTipoContabilizacao();
 
-            LocalDate dataInicio = LocalDate.parse(req.get("dataInicio"));
-            LocalDate dataTermino = LocalDate.parse(req.get("dataTermino"));
+            LocalDate dataInicio = LocalDate.parse(req.getDataInicio());
+            LocalDate dataTermino = LocalDate.parse(req.getDataTermino());
 
             if (eventoRepository.verificarEventoCadastrado(titulo)) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Já existe um evento cadastrado com este título."));
@@ -174,7 +174,6 @@ public class EventoController {
                 return ResponseEntity.status(500).body(Map.of("error", "Não foi possível criar o evento."));
             }
         } catch (Exception e) {
-            System.err.println("Erro ao criar evento: " + e.getMessage());
             return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro interno no servidor ao cadastrar o evento."));
         }
     }
@@ -184,14 +183,14 @@ public class EventoController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> confirmarEdicao(@PathVariable Integer id, @RequestBody Map<String, String> req) {
+    public ResponseEntity<?> confirmarEdicao(@PathVariable Integer id, @Valid @RequestBody EventoRequestDTO req) {
         try {
-            String titulo = req.get("titulo");
-            String descricao = req.get("descricao");
-            String link = req.get("link");
-            String tipo = req.get("tipoContabilizacao");
-            LocalDate dataInicio = LocalDate.parse(req.get("dataInicio"));
-            LocalDate dataTermino = LocalDate.parse(req.get("dataTermino"));
+            String titulo = req.getTitulo();
+            String descricao = req.getDescricao();
+            String link = req.getLink();
+            String tipo = req.getTipoContabilizacao();
+            LocalDate dataInicio = LocalDate.parse(req.getDataInicio());
+            LocalDate dataTermino = LocalDate.parse(req.getDataTermino());
 
             Optional<Evento> eventoEncontrado = eventoRepository.buscarEventoPorId(id);
             Evento evento = eventoEncontrado.get();
@@ -217,7 +216,6 @@ public class EventoController {
                 return ResponseEntity.status(500).body(Map.of("error", "Erro ao tentar salvar o evento no banco."));
             }
         } catch (Exception e) {
-            System.err.println("Erro ao editar evento: " + e.getMessage());
             return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro interno no servidor ao editar o evento."));
         }
     }

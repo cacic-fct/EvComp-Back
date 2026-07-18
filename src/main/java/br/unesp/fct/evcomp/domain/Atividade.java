@@ -141,7 +141,6 @@ public class Atividade {
             
             return true;
         } catch (Exception e) {
-            System.err.println("Erro ao alterar dados da atividade: " + e.getMessage());
             return false;
         }
     }

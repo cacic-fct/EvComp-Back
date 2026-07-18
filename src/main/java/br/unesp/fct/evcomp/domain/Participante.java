@@ -12,6 +12,7 @@ public class Participante extends Usuário {
     @Column(name = "ra", columnDefinition = "CHAR(9)")
     private String RA;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @Column(name = "secret_seed", length = 32)
     private String secretSeed;
 

@@ -1,8 +1,10 @@
 package br.unesp.fct.evcomp.controller;
 
 import br.unesp.fct.evcomp.domain.Participante;
+import br.unesp.fct.evcomp.dto.CadastroRequestDTO;
 import br.unesp.fct.evcomp.repository.ParticipanteRepository;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,11 +22,11 @@ public class CadastroController {
     }
 
     @PostMapping
-    public ResponseEntity<?> confirmarCadastro(@RequestBody Map<String, String> payload) {
-        String nomeCompleto = payload.get("nome"); // assumindo que o frontend envia em 'nome'
-        String email = payload.get("email");
-        String senha = payload.get("senha");
-        String ra = payload.get("ra");
+    public ResponseEntity<?> confirmarCadastro(@Valid @RequestBody CadastroRequestDTO payload) {
+        String nomeCompleto = payload.getNome();
+        String email = payload.getEmail();
+        String senha = payload.getSenha();
+        String ra = payload.getRa();
 
         if (participanteRepository.verificarEmailCadastrado(email)) {
             return ResponseEntity.status(400).body(Map.of("error", "Erro: Este e-mail já está em uso."));
@@ -42,11 +44,10 @@ public class CadastroController {
 
             return ResponseEntity.ok().body(Map.of("message", "Cadastro realizado com sucesso"));
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
-            System.err.println("Erro de violação de integridade (e-mail ou RA duplicado): " + e.getMessage());
             return ResponseEntity.status(400).body(Map.of("error", "Erro de integridade. Este e-mail ou RA já pode estar em uso."));
         } catch (Exception e) {
-            System.err.println("Erro desconhecido ao cadastrar usuário: " + e.getMessage());
             return ResponseEntity.status(500).body(Map.of("error", "Ocorreu um erro interno no servidor. Tente novamente mais tarde."));
         }
     }
 }
+
