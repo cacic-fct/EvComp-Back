@@ -17,6 +17,7 @@ public class AtividadeResponseDTO {
     private int maxParticipantes;
     private int cargaHorariaTotal;
     private int cargaHorariaMinistrante;
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Evento evento;
     private List<ParticipanteResumoDTO> ministrantes;
 

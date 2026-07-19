@@ -50,7 +50,8 @@ public class SecurityConfig {
                 // Relatórios: somente ADMIN
                 .requestMatchers("/api/relatorios/**").hasRole("ADMIN")
 
-                // Eventos: GET é livre para autenticados, POST/PUT/DELETE somente ADMIN
+                // Eventos: Listar participantes apenas ADMIN, outros GETs livres para autenticados, POST/PUT/DELETE somente ADMIN
+                .requestMatchers(HttpMethod.GET, "/api/eventos/*/participantes").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/eventos/**").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/eventos/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/eventos/**").hasRole("ADMIN")
@@ -61,6 +62,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/atividades/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/atividades/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/atividades/**").hasRole("ADMIN")
+                
+                // Participantes: Visualização apenas para ADMIN
+                .requestMatchers(HttpMethod.GET, "/api/participantes/**").hasRole("ADMIN")
 
                 // Todo o resto: precisa estar autenticado
                 .anyRequest().authenticated()

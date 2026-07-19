@@ -14,6 +14,7 @@ public class TokenRedefinicao {
     private int tokenGerado;
     private LocalDateTime dataExpiracao;
     private boolean utilizado = false;
+    private int tentativasFalhas = 0;
     private Usuário usuario;
 
     public TokenRedefinicao() {
@@ -37,7 +38,15 @@ public class TokenRedefinicao {
 
         if (LocalDateTime.now().isAfter(this.dataExpiracao)) return false;
 
-        return this.tokenGerado == tokenRecebido;
+        if (this.tokenGerado == tokenRecebido) {
+            return true;
+        } else {
+            this.tentativasFalhas++;
+            if (this.tentativasFalhas >= 3) {
+                this.invalidarToken();
+            }
+            return false;
+        }
     }
 
     public void invalidarToken() {

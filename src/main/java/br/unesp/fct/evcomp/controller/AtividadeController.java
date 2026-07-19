@@ -38,11 +38,16 @@ public class AtividadeController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Atividade>> listarAtividades() {
-        return ResponseEntity.ok(atividadeRepository.findAll());
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public ResponseEntity<List<br.unesp.fct.evcomp.dto.AtividadeResponseDTO>> listarAtividades() {
+        List<br.unesp.fct.evcomp.dto.AtividadeResponseDTO> dtos = atividadeRepository.findAll().stream()
+            .map(br.unesp.fct.evcomp.dto.AtividadeResponseDTO::fromEntity)
+            .toList();
+        return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/ativas-coletor")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<?> listarAtividadesDeEventosAtivos(jakarta.servlet.http.HttpServletRequest request) {
         Integer usuarioId = (Integer) request.getAttribute("usuarioLogadoId");
         if (usuarioId == null) {
@@ -64,7 +69,11 @@ public class AtividadeController {
                          eventosColetados.stream().anyMatch(e -> e.getId().equals(a.getEvento().getId())))
             .collect(java.util.stream.Collectors.toList());
 
-        return ResponseEntity.ok(ativas);
+        List<br.unesp.fct.evcomp.dto.AtividadeResponseDTO> dtos = ativas.stream()
+            .map(br.unesp.fct.evcomp.dto.AtividadeResponseDTO::fromEntity)
+            .toList();
+
+        return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/{id}")

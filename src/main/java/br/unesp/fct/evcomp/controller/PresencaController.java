@@ -41,8 +41,25 @@ public class PresencaController {
 
     @Transactional
     @PostMapping("/registrar")
-    public ResponseEntity<?> registrarPresenca(@Valid @RequestBody br.unesp.fct.evcomp.dto.PresencaRequestDTO req) {
+    public ResponseEntity<?> registrarPresenca(@Valid @RequestBody br.unesp.fct.evcomp.dto.PresencaRequestDTO req, jakarta.servlet.http.HttpServletRequest request) {
         try {
+            Integer usuarioLogadoId = (Integer) request.getAttribute("usuarioLogadoId");
+            if (usuarioLogadoId == null) return exibirMensagemErro("Não autenticado.", 401);
+            
+            Optional<br.unesp.fct.evcomp.domain.Participante> partOpt = participanteRepository.buscarParticipantePorId(usuarioLogadoId);
+            if (partOpt.isEmpty() || !(partOpt.get() instanceof br.unesp.fct.evcomp.domain.ColetorDePresenca)) {
+                return exibirMensagemErro("Acesso negado. Apenas coletores podem registrar presenças.", 403);
+            }
+            
+            Optional<br.unesp.fct.evcomp.domain.Atividade> atividadeOpt = atividadeRepository.buscarAtividadePorId(req.getAtividadeId());
+            if (atividadeOpt.isEmpty()) return exibirMensagemErro("Atividade não encontrada.", 404);
+            
+            br.unesp.fct.evcomp.domain.ColetorDePresenca coletor = (br.unesp.fct.evcomp.domain.ColetorDePresenca) partOpt.get();
+            br.unesp.fct.evcomp.domain.Evento evento = atividadeOpt.get().getEvento();
+            if (evento == null || coletor.getEventosColetados().stream().noneMatch(e -> e.getId().equals(evento.getId()))) {
+                return exibirMensagemErro("Acesso negado. Você não é coletor deste evento.", 403);
+            }
+
             Integer atividadeId = req.getAtividadeId();
             String codigoParticipante = req.getCodigoParticipante();
             long timestampLido = req.getTimestampLido();
@@ -88,7 +105,14 @@ public class PresencaController {
     }
 
     @GetMapping("/participante/{participanteId}")
-    public ResponseEntity<?> listarPresencasParticipante(@PathVariable Integer participanteId) {
+    public ResponseEntity<?> listarPresencasParticipante(@PathVariable Integer participanteId, jakarta.servlet.http.HttpServletRequest request) {
+        Integer usuarioLogadoId = (Integer) request.getAttribute("usuarioLogadoId");
+        String usuarioLogadoRole = (String) request.getAttribute("usuarioLogadoRole");
+
+        if (!"ADMIN".equals(usuarioLogadoRole) && !participanteId.equals(usuarioLogadoId)) {
+            return exibirMensagemErro("Acesso negado. Você só pode visualizar suas próprias presenças.", 403);
+        }
+
         try {
             List<Integer> presencas = presencaRepository.buscarAtividadesComPresencaPorParticipante(participanteId);
             return ResponseEntity.ok(presencas);

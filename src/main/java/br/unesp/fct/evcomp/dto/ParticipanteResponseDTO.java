@@ -12,6 +12,7 @@ public class ParticipanteResponseDTO {
     private String email;
     private String ra;
     private String role;
+    private java.util.List<java.util.Map<String, Object>> eventosColetados;
 
     public ParticipanteResponseDTO() {}
 
@@ -23,29 +24,38 @@ public class ParticipanteResponseDTO {
         this.role = role;
     }
 
-    /**
-     * Factory method para converter uma entidade Participante em DTO seguro.
-     */
+    public java.util.List<java.util.Map<String, Object>> getEventosColetados() { return eventosColetados; }
+    public void setEventosColetados(java.util.List<java.util.Map<String, Object>> eventosColetados) { this.eventosColetados = eventosColetados; }
+
     public static ParticipanteResponseDTO fromEntity(br.unesp.fct.evcomp.domain.Participante participante) {
-        return new ParticipanteResponseDTO(
+        ParticipanteResponseDTO dto = new ParticipanteResponseDTO(
             participante.getId(),
             participante.getNomeCompleto(),
             participante.getEmail(),
             participante.getRA(),
             participante.getRole()
         );
+        
+        if (participante instanceof br.unesp.fct.evcomp.domain.ColetorDePresenca) {
+            br.unesp.fct.evcomp.domain.ColetorDePresenca coletor = (br.unesp.fct.evcomp.domain.ColetorDePresenca) participante;
+            if (coletor.getEventosColetados() != null) {
+                dto.setEventosColetados(coletor.getEventosColetados().stream()
+                    .map(e -> java.util.Map.<String, Object>of("id", e.getId(), "titulo", e.getTitulo()))
+                    .collect(java.util.stream.Collectors.toList()));
+            }
+        }
+        return dto;
     }
 
     public static ParticipanteResponseDTO fromEntity(br.unesp.fct.evcomp.domain.Usuário usuario) {
-        String ra = null;
         if (usuario instanceof br.unesp.fct.evcomp.domain.Participante) {
-            ra = ((br.unesp.fct.evcomp.domain.Participante) usuario).getRA();
+            return fromEntity((br.unesp.fct.evcomp.domain.Participante) usuario);
         }
         return new ParticipanteResponseDTO(
             usuario.getId(),
             usuario.getNomeCompleto(),
             usuario.getEmail(),
-            ra,
+            null,
             usuario.getRole()
         );
     }
