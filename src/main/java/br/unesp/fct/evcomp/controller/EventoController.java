@@ -137,10 +137,13 @@ public class EventoController {
         Map<String, Object> dadosEvento = evento.pegarDadosEvento();
 
         List<br.unesp.fct.evcomp.domain.Atividade> atividades = atividadeRepository.buscarAtividadesPorEvento(eventoId);
+        List<br.unesp.fct.evcomp.dto.AtividadeResponseDTO> atividadesDto = atividades.stream()
+            .map(br.unesp.fct.evcomp.dto.AtividadeResponseDTO::fromEntity)
+            .toList();
         
         return ResponseEntity.ok(Map.of(
             "dadosEvento", dadosEvento,
-            "atividades", atividades
+            "atividades", atividadesDto
         ));
     }
 

@@ -73,6 +73,7 @@ public abstract class Usuário {
         this.email = email;
     }
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public String getSenha() {
         return senha;
     }
@@ -81,6 +82,7 @@ public abstract class Usuário {
         this.senha = senha;
     }
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public String getTokenRedefinicao() {
         return tokenRedefinicao;
     }

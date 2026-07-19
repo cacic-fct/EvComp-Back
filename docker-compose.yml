@@ -8,6 +8,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: evcomp
+      TZ: America/Sao_Paulo
     ports:
       - "3307:3306"
     volumes:
@@ -28,7 +29,7 @@ services:
     environment:
       - TZ=America/Sao_Paulo
       - SPRING_PROFILES_ACTIVE=mysql
-      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/evcomp?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/evcomp?useSSL=false&serverTimezone=America/Sao_Paulo&allowPublicKeyRetrieval=true
       - DB_USER=${DB_USER:-root}
       - DB_PASSWORD=${DB_PASSWORD:-root}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=validate

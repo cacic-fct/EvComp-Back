@@ -102,7 +102,7 @@ public class InscricaoController {
 
         inscricaoRepository.salvarInscricao(inscricao);
 
-        return ResponseEntity.ok(inscricao);
+        return ResponseEntity.ok(br.unesp.fct.evcomp.dto.InscricaoResponseDTO.fromEntity(inscricao));
     }
 
     @GetMapping("/minhas")
@@ -136,7 +136,10 @@ public class InscricaoController {
             }
 
             List<br.unesp.fct.evcomp.domain.Inscrição> inscricoes = inscricaoRepository.buscarInscricoesAtivasPorParticipante(participanteId);
-            return ResponseEntity.ok(inscricoes);
+            List<br.unesp.fct.evcomp.dto.InscricaoResponseDTO> dtos = inscricoes.stream()
+                .map(br.unesp.fct.evcomp.dto.InscricaoResponseDTO::fromEntity)
+                .toList();
+            return ResponseEntity.ok(dtos);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Ocorreu um erro ao carregar os detalhes de inscrições."));
         }

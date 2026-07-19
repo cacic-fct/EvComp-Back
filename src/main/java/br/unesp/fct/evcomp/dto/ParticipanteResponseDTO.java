@@ -36,6 +36,20 @@ public class ParticipanteResponseDTO {
         );
     }
 
+    public static ParticipanteResponseDTO fromEntity(br.unesp.fct.evcomp.domain.Usuário usuario) {
+        String ra = null;
+        if (usuario instanceof br.unesp.fct.evcomp.domain.Participante) {
+            ra = ((br.unesp.fct.evcomp.domain.Participante) usuario).getRA();
+        }
+        return new ParticipanteResponseDTO(
+            usuario.getId(),
+            usuario.getNomeCompleto(),
+            usuario.getEmail(),
+            ra,
+            usuario.getRole()
+        );
+    }
+
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 

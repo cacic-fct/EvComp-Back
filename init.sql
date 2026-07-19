@@ -143,10 +143,10 @@ CREATE TABLE `certificado` (
 
 LOCK TABLES `usuário` WRITE;
 INSERT INTO `usuário` (`idUsuário`, `nome_completo`, `email`, `senha_hash`, `tipo_usuario`, `ra`, `secret_seed`) VALUES
-(1, 'Administrador do Sistema', 'admin@unesp.br', 'Senha123', 'ADM', NULL, NULL),
-(2, 'João da Silva', 'joao@unesp.br', 'Senha123', 'PAR', '123456789', 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP'),
-(3, 'Maria Coletora', 'maria.coletora@unesp.br', 'Senha123', 'COL', '987654321', 'KRSXG5DSNFXGOIDBNZSXIYLNMVZXI2LO'),
-(4, 'Carlos Professor', 'carlos.prof@unesp.br', 'Senha123', 'PAR', '241250676', 'PX5ZS6FECPJRQRQNOYDE2YD5O35DVTZI');
+(1, 'Administrador do Sistema', 'admin@unesp.br', '$2a$10$/xybksYlPCvFzAhZkY940.AsbmDu2J1IiJwZdjHHnc396NONjiUJW', 'ADM', NULL, NULL),
+(2, 'João da Silva', 'joao@unesp.br', '$2a$10$/xybksYlPCvFzAhZkY940.AsbmDu2J1IiJwZdjHHnc396NONjiUJW', 'PAR', '123456789', 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP'),
+(3, 'Maria Coletora', 'maria.coletora@unesp.br', '$2a$10$/xybksYlPCvFzAhZkY940.AsbmDu2J1IiJwZdjHHnc396NONjiUJW', 'COL', '987654321', 'KRSXG5DSNFXGOIDBNZSXIYLNMVZXI2LO'),
+(4, 'Carlos Professor', 'carlos.prof@unesp.br', '$2a$10$/xybksYlPCvFzAhZkY940.AsbmDu2J1IiJwZdjHHnc396NONjiUJW', 'PAR', '241250676', 'PX5ZS6FECPJRQRQNOYDE2YD5O35DVTZI');
 UNLOCK TABLES;
 
 LOCK TABLES `evento` WRITE;

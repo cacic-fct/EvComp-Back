@@ -38,6 +38,7 @@ public class Participante extends Usuário {
         return new Participante(nomeCompleto, email, senha);
     }
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public String getRA() {
         return RA;
     }
@@ -46,6 +47,7 @@ public class Participante extends Usuário {
         this.RA = RA;
     }
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public String getSecretSeed() {
         if (this.secretSeed == null) {
             this.secretSeed = gerarSecretSeed();
